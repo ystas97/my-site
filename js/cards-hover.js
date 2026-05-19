@@ -1,10 +1,11 @@
 (function () {
   const HOVER_ANIM_MS = 250;
 
-  function initWrap(wrap) {
-    const card = wrap.closest(".card");
+  function initCard(card) {
+    const wrap = card.querySelector('[class*="hover-wrap"]');
+    if (!wrap) return;
+
     let leaveTimer = null;
-    let savedZ = null;
 
     const setState = (on) => {
       if (on) {
@@ -13,33 +14,22 @@
           leaveTimer = null;
         }
         wrap.classList.add("is-hovered");
-        if (card) {
-          savedZ = {
-            value: card.style.getPropertyValue("z-index"),
-            priority: card.style.getPropertyPriority("z-index"),
-          };
-          card.style.setProperty("z-index", "999", "important");
-        }
+        card.classList.add("is-card-hovered");
       } else {
         wrap.classList.remove("is-hovered");
+        card.classList.remove("is-card-hovered");
         if (leaveTimer) clearTimeout(leaveTimer);
         leaveTimer = setTimeout(() => {
-          if (card) {
-            if (savedZ?.priority) {
-              card.style.setProperty("z-index", savedZ.value, savedZ.priority);
-            } else {
-              card.style.setProperty("z-index", savedZ?.value || "");
-            }
-          }
           leaveTimer = null;
         }, HOVER_ANIM_MS);
       }
     };
 
-    wrap.addEventListener("mouseenter", () => setState(true));
-    wrap.addEventListener("mouseleave", () => setState(false));
+    /* События на .card — зона наведения не меняется при scale внутри */
+    card.addEventListener("mouseenter", () => setState(true));
+    card.addEventListener("mouseleave", () => setState(false));
 
-    wrap.addEventListener(
+    card.addEventListener(
       "click",
       () => {
         if (window.matchMedia("(hover: none)").matches) {
@@ -50,5 +40,5 @@
     );
   }
 
-  document.querySelectorAll('[class*="hover-wrap"]').forEach(initWrap);
+  document.querySelectorAll(".card").forEach(initCard);
 })();
