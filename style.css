@@ -300,15 +300,24 @@ img {
 /* Сетка: линии через gap (без border/outline у карточек) */
 .grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-auto-rows: auto;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   align-content: start;
   width: 100%;
-  height: max-content;
   overflow-x: clip;
   background-color: var(--border);
-  gap: 0.5px;
-  border: 0.5px solid var(--border);
+  gap: 1px;
+  border: 1px solid var(--border);
+}
+
+/* После layoutGrid() — фиксированный квадрат в px (Safari на «круглых» ширинах) */
+.grid.is-sized {
+  grid-auto-rows: var(--grid-cell);
+}
+
+.grid.is-sized .card {
+  aspect-ratio: unset;
+  height: var(--grid-cell);
+  max-height: var(--grid-cell);
 }
 
 /* Пустые ячейки последнего ряда (см. render-cards.js) */
@@ -317,16 +326,18 @@ img {
   background: #fff;
   min-height: 0;
   min-width: 0;
-  aspect-ratio: unset;
-  align-self: start;
 }
 
-/* Safari: пустой aspect-ratio часто даёт «лишний» ряд — высота через padding */
+/* Fallback до первого layoutGrid (и если JS не сработал) */
 .card--spacer::before {
   content: "";
   display: block;
   width: 100%;
   padding-bottom: 100%;
+}
+
+.grid.is-sized .card--spacer::before {
+  display: none;
 }
 
 /* Карточка: scale + тень на одном слое */
