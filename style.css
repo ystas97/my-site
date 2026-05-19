@@ -330,11 +330,24 @@ body.popup-open {
 
 .project-popup__footer {
   flex-shrink: 0;
-  display: flex;
-  flex-direction: column-reverse;
   overflow: hidden;
   background: #fffefe;
   border-top: 0.5px solid var(--border);
+  --footer-bar-size: 82px;
+}
+
+/* Вся нижняя панель: сначала видна только строка с заголовком, по клику поднимается целиком */
+.project-popup__sheet {
+  display: flex;
+  flex-direction: column;
+  transform: translateY(calc(100% - var(--footer-bar-size)));
+  transition: transform var(--popup-duration) ease-in-out;
+  -webkit-transition: -webkit-transform var(--popup-duration) ease-in-out;
+}
+
+.project-popup__footer.is-expanded .project-popup__sheet {
+  transform: translateY(0);
+  -webkit-transform: translateY(0);
 }
 
 .project-popup__footer-bar {
@@ -343,11 +356,10 @@ body.popup-open {
   align-items: flex-start;
   gap: 10px;
   width: 100%;
+  flex-shrink: 0;
   min-height: clamp(64px, 10vh, 82px);
   padding: clamp(10px, 2vh, 18px) clamp(16px, 12vw, 200px);
   background: #fffefe;
-  position: relative;
-  z-index: 2;
 }
 
 .project-popup__expand {
@@ -374,22 +386,14 @@ body.popup-open {
   display: block;
 }
 
-/* Блок с текстом выезжает снизу */
 .project-popup__details {
   width: 100%;
-  padding: clamp(16px, 3vh, 28px) clamp(16px, 12vw, 200px) clamp(8px, 2vh, 16px);
+  padding: clamp(16px, 3vh, 28px) clamp(16px, 12vw, 200px) clamp(4px, 1vh, 12px);
   background: #fffefe;
   border-top: 0.5px solid var(--border);
-  transform: translateY(100%);
-  transition: transform var(--popup-duration) ease-in-out;
-  -webkit-transition: -webkit-transform var(--popup-duration) ease-in-out;
-  max-height: min(50vh, 420px);
+  max-height: min(45vh, 380px);
   overflow-y: auto;
-}
-
-.project-popup__footer.is-expanded .project-popup__details {
-  transform: translateY(0);
-  -webkit-transform: translateY(0);
+  flex-shrink: 0;
 }
 
 .project-popup__facts {
