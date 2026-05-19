@@ -1,0 +1,23 @@
+(function () {
+  const grid = document.getElementById("projects");
+  if (!grid || typeof PROJECTS === "undefined") return;
+
+  grid.innerHTML = PROJECTS.map(
+    (p) => `
+    <article class="card">
+      <a class="hover-wrap card__inner" href="#">
+        <div class="card__media">
+          <img src="assets/images/${p.image}" alt="" width="200" height="200" loading="lazy" />
+        </div>
+        <div class="card__text">
+          <div class="card__row">
+            <h2 class="card__title">${p.title}</h2>
+            <span class="card__year">${p.year}</span>
+          </div>
+          <p class="card__city">${p.city}</p>
+        </div>
+      </a>
+    </article>
+  `
+  ).join("");
+})();

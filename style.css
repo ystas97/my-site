@@ -1,11 +1,9 @@
 :root {
-  --page-max: 1480px;
-  --cell: 360px;
+  --page-width: 1440px;
+  --card-size: 360px;
+  --photo-size: 200px;
   --border: #6e6e6e;
-  --border-alt: #696867;
-  --text: #000;
   --text-muted: #5b5b5b;
-  --text-title: #696867;
   --header-h: 79px;
 }
 
@@ -22,7 +20,7 @@ html {
 body {
   margin: 0;
   background: #fff;
-  color: var(--text);
+  color: #000;
 }
 
 a {
@@ -37,7 +35,7 @@ img {
 
 .page {
   margin: 0 auto;
-  max-width: var(--page-max);
+  max-width: var(--page-width);
   min-height: 100vh;
 }
 
@@ -45,7 +43,7 @@ img {
 .header {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 1000;
   display: grid;
   grid-template-columns: 1fr auto auto;
   align-items: center;
@@ -53,7 +51,7 @@ img {
   height: var(--header-h);
   padding: 0 30px 0 65px;
   background: #fff;
-  border-bottom: 1px solid var(--text);
+  border-bottom: 1px solid #000;
 }
 
 .header__logo img {
@@ -76,8 +74,6 @@ img {
 
 .header__telegram {
   display: flex;
-  align-items: center;
-  justify-content: center;
   width: 26px;
   height: 26px;
   flex-shrink: 0;
@@ -89,41 +85,41 @@ img {
   object-fit: cover;
 }
 
-/* Grid */
+/* Сетка 1440 = 4 × 360 */
 .grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(4, var(--card-size));
+  width: var(--page-width);
+  max-width: 100%;
+  margin: 0 auto;
   border-left: 0.5px solid var(--border);
+  overflow: visible;
 }
 
 .card {
   position: relative;
-  min-height: var(--cell);
+  width: var(--card-size);
+  height: var(--card-size);
   background: #fff;
   border-top: 0.5px solid var(--border);
   border-right: 0.5px solid var(--border);
+  overflow: visible;
 }
 
-.card--b {
-  border-color: var(--border-alt);
-}
-
-.card--c {
-  border-color: var(--border-alt);
-}
-
-.card__link {
+.card__inner {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: var(--cell);
-  padding: 0 80px 24px;
+  justify-content: flex-start;
+  width: 100%;
   height: 100%;
+  padding: 79px 80px 24px;
+  background: #fff;
 }
 
 .card__media {
-  width: 200px;
-  height: 200px;
+  width: var(--photo-size);
+  height: var(--photo-size);
   border-radius: 10px;
   overflow: hidden;
   flex-shrink: 0;
@@ -135,156 +131,92 @@ img {
   object-fit: cover;
 }
 
-/* Variant A */
-.card--a .card__link {
-  padding-top: 79px;
-}
-
-.card--a .card__meta {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  width: 200px;
+.card__text {
+  width: var(--photo-size);
   margin-top: 15px;
 }
 
-.card--a .card__title {
+.card__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.card__title {
   margin: 0;
   flex: 1;
   font-family: "Raleway", sans-serif;
   font-weight: 700;
-  font-size: 11px;
-  line-height: 1.35;
+  font-size: 8px;
+  line-height: normal;
   text-transform: uppercase;
   color: var(--text-muted);
 }
 
-.card--a .card__year {
+.card__year {
   font-family: "Montserrat", sans-serif;
   font-weight: 400;
-  font-size: 10px;
+  font-size: 6px;
+  line-height: normal;
   text-transform: uppercase;
   color: var(--text-muted);
   white-space: nowrap;
 }
 
-.card--a .card__location {
+.card__city {
   margin: 6px 0 0;
-  width: 200px;
-  text-align: center;
   font-family: "Montserrat", sans-serif;
-  font-size: 10px;
+  font-weight: 400;
+  font-size: 6px;
+  line-height: normal;
   text-transform: uppercase;
   color: var(--text-muted);
 }
 
-/* Variant B */
-.card--b .card__link {
-  padding: 28px 18px 20px;
-  align-items: stretch;
+/* Hover (как в макете Tilda) */
+[class*="hover-wrap"] {
+  transform: scale(1);
+  transition:
+    transform 0.25s ease-in-out,
+    box-shadow 0.25s ease-in-out;
+  will-change: transform, box-shadow;
+  transform-origin: center center;
 }
 
-.card--b .card__year--top {
-  align-self: flex-end;
-  margin: 0 18px 8px 0;
-  font-family: "Montserrat", sans-serif;
-  font-size: 10px;
-  text-transform: uppercase;
-  color: var(--text-muted);
+.is-hovered {
+  transform: scale(1.08);
+  box-shadow:
+    0 0 25px rgba(0, 0, 0, 0.12),
+    0 0 50px rgba(0, 0, 0, 0.08);
 }
 
-.card--b .card__media {
-  margin: 0 auto;
-}
-
-.card--b .card__rule {
-  width: 100%;
-  margin: 16px 0 0;
-  border: none;
-  border-top: 0.5px solid var(--border-alt);
-}
-
-.card--b .card__footer {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-  margin-top: 8px;
-}
-
-.card--b .card__title {
-  margin: 0;
-  flex: 1;
-  font-family: "Raleway", sans-serif;
-  font-weight: 700;
-  font-size: 11px;
-  line-height: 1.35;
-  text-transform: uppercase;
-  color: var(--text-title);
-}
-
-.card--b .card__location {
-  margin: 0;
-  font-family: "Montserrat", sans-serif;
-  font-size: 10px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-
-/* Variant C — centered stack */
-.card--c .card__link {
-  justify-content: center;
-  gap: 15px;
-  padding: 24px 80px;
-}
-
-.card--c .card__meta {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  width: 200px;
-}
-
-.card--c .card__title {
-  margin: 0;
-  flex: 1;
-  font-family: "Raleway", sans-serif;
-  font-weight: 700;
-  font-size: 12px;
-  line-height: 1.35;
-  text-transform: uppercase;
-  color: var(--text-title);
-}
-
-.card--c .card__year {
-  font-family: "Montserrat", sans-serif;
-  font-size: 11px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-
-/* Responsive */
-@media (max-width: 1200px) {
+/* Адаптив: ниже 1440 — резиновая сетка */
+@media (max-width: 1439px) {
   .grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+
+  .card {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+  }
+
+  .card__inner {
+    padding: 48px 24px 20px;
   }
 }
 
 @media (max-width: 900px) {
   .header {
-    padding: 0 20px;
+    padding: 16px 20px;
+    height: auto;
     grid-template-columns: 1fr auto;
     grid-template-areas:
       "logo telegram"
       "nav nav";
-    height: auto;
-    padding-top: 16px;
-    padding-bottom: 16px;
     row-gap: 12px;
   }
 
@@ -303,21 +235,6 @@ img {
 
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .card__link {
-    padding-left: 24px;
-    padding-right: 24px;
-  }
-
-  .card--a .card__link {
-    padding-top: 48px;
-  }
-
-  .card--a .card__meta,
-  .card--a .card__location,
-  .card--c .card__meta {
-    width: 100%;
   }
 }
 
