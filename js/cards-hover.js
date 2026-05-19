@@ -1,16 +1,5 @@
-/* Тач: переключение класса .is-active на карточке. Десктоп — CSS :hover */
+/* Тач: только hover-стиль не нужен — открытие проекта в project-popup.js */
 (function () {
   if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
-
-  document.querySelectorAll(".card").forEach((card) => {
-    card.addEventListener(
-      "click",
-      () => {
-        const active = card.classList.contains("is-active");
-        document.querySelectorAll(".card.is-active").forEach((c) => c.classList.remove("is-active"));
-        if (!active) card.classList.add("is-active");
-      },
-      { passive: true }
-    );
-  });
+  /* На тач-устройствах карточки открывают popup по клику (см. project-popup.js) */
 })();

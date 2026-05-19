@@ -1,0 +1,112 @@
+(function () {
+  const popup = document.getElementById("projectPopup");
+  if (!popup || typeof PROJECTS === "undefined") return;
+
+  const panel = popup.querySelector(".project-popup__panel");
+  const imageEl = popup.querySelector(".project-popup__image");
+  const titleEl = popup.querySelector(".project-popup__title");
+  const cityEl = popup.querySelector(".project-popup__city");
+  const yearEl = popup.querySelector(".project-popup__year");
+  const btnPrev = popup.querySelector(".project-popup__arrow--prev");
+  const btnNext = popup.querySelector(".project-popup__arrow--next");
+  const btnClose = popup.querySelector(".project-popup__close");
+  const btnCollapse = popup.querySelector(".project-popup__collapse");
+
+  let projectIndex = 0;
+  let slideIndex = 0;
+  let gallery = [];
+
+  function syncHeaderOffset() {
+    const header = document.querySelector(".header");
+    const h = header ? header.offsetHeight : 79;
+    document.documentElement.style.setProperty("--header-offset", `${h}px`);
+  }
+
+  function galleryFor(project) {
+    if (project.gallery?.length) return project.gallery;
+    return [project.image];
+  }
+
+  function updateSlide() {
+    const file = gallery[slideIndex];
+    imageEl.src = `assets/images/${file}`;
+    imageEl.alt = titleEl.textContent;
+    btnPrev.disabled = gallery.length <= 1;
+    btnNext.disabled = gallery.length <= 1;
+  }
+
+  function updateMeta() {
+    const project = PROJECTS[projectIndex];
+    titleEl.textContent = project.title;
+    cityEl.textContent = project.city;
+    yearEl.textContent = project.year;
+  }
+
+  function open(index) {
+    projectIndex = index;
+    const project = PROJECTS[projectIndex];
+    gallery = galleryFor(project);
+    slideIndex = 0;
+    updateMeta();
+    updateSlide();
+
+    popup.hidden = false;
+    popup.setAttribute("aria-hidden", "false");
+    document.body.classList.add("popup-open");
+
+    requestAnimationFrame(() => {
+      popup.classList.add("is-open");
+    });
+  }
+
+  function close() {
+    popup.classList.remove("is-open");
+    document.body.classList.remove("popup-open");
+
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      popup.hidden = true;
+      popup.setAttribute("aria-hidden", "true");
+      imageEl.removeAttribute("src");
+    };
+
+    const onEnd = (e) => {
+      if (e.target !== panel) return;
+      if (e.propertyName !== "transform" && e.propertyName !== "-webkit-transform") return;
+      finish();
+    };
+    panel.addEventListener("transitionend", onEnd);
+    setTimeout(finish, 600);
+  }
+
+  function showSlide(delta) {
+    if (gallery.length <= 1) return;
+    slideIndex = (slideIndex + delta + gallery.length) % gallery.length;
+    updateSlide();
+  }
+
+  document.getElementById("projects")?.addEventListener("click", (e) => {
+    const link = e.target.closest(".card__inner");
+    if (!link) return;
+    e.preventDefault();
+    const index = Number(link.dataset.projectIndex);
+    if (!Number.isNaN(index)) open(index);
+  });
+
+  btnClose?.addEventListener("click", close);
+  btnCollapse?.addEventListener("click", close);
+  btnPrev?.addEventListener("click", () => showSlide(-1));
+  btnNext?.addEventListener("click", () => showSlide(1));
+
+  document.addEventListener("keydown", (e) => {
+    if (!popup.classList.contains("is-open")) return;
+    if (e.key === "Escape") close();
+    if (e.key === "ArrowLeft") showSlide(-1);
+    if (e.key === "ArrowRight") showSlide(1);
+  });
+
+  syncHeaderOffset();
+  window.addEventListener("resize", syncHeaderOffset);
+})();

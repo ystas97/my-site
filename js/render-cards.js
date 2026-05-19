@@ -3,9 +3,9 @@
   if (!grid || typeof PROJECTS === "undefined") return;
 
   grid.innerHTML = PROJECTS.map(
-    (p) => `
+    (p, index) => `
     <article class="card">
-      <a class="card__inner" href="#">
+      <a class="card__inner" href="#" data-project-index="${index}">
         <div class="card__media">
           <img src="assets/images/${p.image}" alt="" loading="lazy" />
         </div>

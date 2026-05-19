@@ -6,7 +6,7 @@
   <title>antonovka.studio — архитектурное бюро</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400&family=Raleway:wght@700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400&family=Raleway:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -28,8 +28,41 @@
     <main class="grid" id="projects" aria-label="Портфолио"></main>
   </div>
 
+  <div id="projectPopup" class="project-popup" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="projectPopupTitle">
+    <div class="project-popup__panel">
+      <button type="button" class="project-popup__close" aria-label="Закрыть">
+        <span aria-hidden="true"></span>
+      </button>
+
+      <div class="project-popup__gallery">
+        <button type="button" class="project-popup__arrow project-popup__arrow--prev" aria-label="Предыдущее фото">
+          <img src="assets/icons/arrow-left.svg" alt="" width="7" height="12" />
+        </button>
+        <div class="project-popup__image-wrap">
+          <img class="project-popup__image" src="" alt="" />
+        </div>
+        <button type="button" class="project-popup__arrow project-popup__arrow--next" aria-label="Следующее фото">
+          <img src="assets/icons/arrow-right.svg" alt="" width="7" height="12" />
+        </button>
+      </div>
+
+      <footer class="project-popup__footer">
+        <button type="button" class="project-popup__collapse" aria-label="Закрыть">
+          <img src="assets/icons/chevron-down.svg" alt="" width="10" height="6" />
+        </button>
+        <p class="project-popup__meta" id="projectPopupTitle">
+          <span class="project-popup__title"></span>
+          <span class="project-popup__sep"> | </span>
+          <span class="project-popup__city"></span>
+        </p>
+        <span class="project-popup__year"></span>
+      </footer>
+    </div>
+  </div>
+
   <script src="js/projects.js"></script>
   <script src="js/render-cards.js"></script>
   <script src="js/cards-hover.js"></script>
+  <script src="js/project-popup.js"></script>
 </body>
 </html>
