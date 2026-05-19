@@ -114,6 +114,8 @@ const PROJECTS = [
 ];
 
 PROJECTS.forEach((project) => {
+  if (!project.status) project.status = "Концепция";
+  if (!project.typology) project.typology = "Общественное здание";
   if (project.description) return;
   project.description =
     `Проект «${project.title}» — ${project.city}, ${project.year}. ` +

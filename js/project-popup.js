@@ -4,12 +4,14 @@
 
   const panel = popup.querySelector(".project-popup__panel");
   const footer = popup.querySelector(".project-popup__footer");
+  const detailsEl = document.getElementById("projectDetails");
   const imageEl = popup.querySelector(".project-popup__image");
   const titleEl = popup.querySelector(".project-popup__title");
   const cityEl = popup.querySelector(".project-popup__city");
   const yearEl = popup.querySelector(".project-popup__year");
-  const descriptionEl = popup.querySelector(".project-popup__description");
-  const descriptionTextEl = popup.querySelector(".project-popup__description-text");
+  const statusEl = popup.querySelector(".project-popup__status");
+  const typologyEl = popup.querySelector(".project-popup__typology");
+  const descriptionEl = popup.querySelector(".project-popup__description-text");
   const btnPrev = popup.querySelector(".project-popup__arrow--prev");
   const btnNext = popup.querySelector(".project-popup__arrow--next");
   const btnClose = popup.querySelector(".project-popup__close");
@@ -30,18 +32,14 @@
     return [project.image];
   }
 
-  function setDescriptionOpen(open) {
+  function setDetailsOpen(open) {
     footer.classList.toggle("is-expanded", open);
     btnExpand.setAttribute("aria-expanded", String(open));
     btnExpand.setAttribute(
       "aria-label",
       open ? "Скрыть описание проекта" : "Показать описание проекта"
     );
-    if (open) {
-      descriptionEl.hidden = false;
-    } else {
-      descriptionEl.hidden = true;
-    }
+    detailsEl.setAttribute("aria-hidden", String(!open));
   }
 
   function updateSlide() {
@@ -57,7 +55,9 @@
     titleEl.textContent = project.title;
     cityEl.textContent = project.city;
     yearEl.textContent = project.year;
-    descriptionTextEl.textContent = project.description || "";
+    statusEl.textContent = project.status || "—";
+    typologyEl.textContent = project.typology || "—";
+    descriptionEl.textContent = project.description || "";
   }
 
   function open(index) {
@@ -65,7 +65,7 @@
     const project = PROJECTS[projectIndex];
     gallery = galleryFor(project);
     slideIndex = 0;
-    setDescriptionOpen(false);
+    setDetailsOpen(false);
     updateMeta();
     updateSlide();
 
@@ -79,7 +79,7 @@
   }
 
   function close() {
-    setDescriptionOpen(false);
+    setDetailsOpen(false);
     popup.classList.remove("is-open");
     document.body.classList.remove("popup-open");
 
@@ -108,7 +108,7 @@
   }
 
   function toggleDescription() {
-    setDescriptionOpen(!footer.classList.contains("is-expanded"));
+    setDetailsOpen(!footer.classList.contains("is-expanded"));
   }
 
   document.getElementById("projects")?.addEventListener("click", (e) => {
@@ -126,7 +126,13 @@
 
   document.addEventListener("keydown", (e) => {
     if (!popup.classList.contains("is-open")) return;
-    if (e.key === "Escape") close();
+    if (e.key === "Escape") {
+      if (footer.classList.contains("is-expanded")) {
+        setDetailsOpen(false);
+        return;
+      }
+      close();
+    }
     if (e.key === "ArrowLeft") showSlide(-1);
     if (e.key === "ArrowRight") showSlide(1);
   });

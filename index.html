@@ -47,26 +47,37 @@
       </div>
 
       <footer class="project-popup__footer">
-        <button
-          type="button"
-          class="project-popup__expand"
-          aria-label="Показать описание проекта"
-          aria-expanded="false"
-          aria-controls="projectDescription"
-        >
-          <img src="assets/icons/chevron-up.svg" alt="" width="10" height="6" />
-        </button>
-        <div id="projectDescription" class="project-popup__description" hidden>
-          <p class="project-popup__description-text"></p>
+        <div id="projectDetails" class="project-popup__details" aria-hidden="true">
+          <dl class="project-popup__facts">
+            <dt>Статус</dt>
+            <dd class="project-popup__status"></dd>
+            <dt>Типология</dt>
+            <dd class="project-popup__typology"></dd>
+            <dt>Описание</dt>
+            <dd class="project-popup__description-text"></dd>
+          </dl>
         </div>
-        <div class="project-popup__footer-row">
-          <p class="project-popup__meta" id="projectPopupTitle">
-            <span class="project-popup__title"></span>
-            <span class="project-popup__sep"> | </span>
-            <span class="project-popup__city"></span>
-          </p>
-          <span class="project-popup__year"></span>
-        </motion.div>
+
+        <div class="project-popup__footer-bar">
+          <button
+            type="button"
+            class="project-popup__expand"
+            aria-label="Показать описание проекта"
+            aria-expanded="false"
+            aria-controls="projectDetails"
+          >
+            <img class="project-popup__chevron project-popup__chevron--up" src="assets/icons/chevron-up.svg" alt="" width="10" height="6" />
+            <img class="project-popup__chevron project-popup__chevron--down" src="assets/icons/chevron-down.svg" alt="" width="10" height="6" hidden />
+          </button>
+          <div class="project-popup__footer-row">
+            <p class="project-popup__meta" id="projectPopupTitle">
+              <span class="project-popup__title"></span>
+              <span class="project-popup__sep"> · </span>
+              <span class="project-popup__city"></span>
+            </p>
+            <span class="project-popup__year"></span>
+          </div>
+        </div>
       </footer>
     </div>
   </div>

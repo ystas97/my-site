@@ -331,13 +331,23 @@ body.popup-open {
 .project-popup__footer {
   flex-shrink: 0;
   display: flex;
+  flex-direction: column-reverse;
+  overflow: hidden;
+  background: #fffefe;
+  border-top: 0.5px solid var(--border);
+}
+
+.project-popup__footer-bar {
+  display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 10px;
+  width: 100%;
   min-height: clamp(64px, 10vh, 82px);
   padding: clamp(10px, 2vh, 18px) clamp(16px, 12vw, 200px);
   background: #fffefe;
-  border-top: 0.5px solid var(--border);
+  position: relative;
+  z-index: 2;
 }
 
 .project-popup__expand {
@@ -348,35 +358,59 @@ body.popup-open {
   line-height: 0;
 }
 
-.project-popup__expand img {
+.project-popup__chevron {
   display: block;
-  transition: transform 0.25s ease-in-out;
 }
 
-.project-popup__footer.is-expanded .project-popup__expand img {
-  transform: rotate(180deg);
+.project-popup__chevron--down {
+  display: none;
 }
 
-.project-popup__description {
+.project-popup__footer.is-expanded .project-popup__chevron--up {
+  display: none;
+}
+
+.project-popup__footer.is-expanded .project-popup__chevron--down {
+  display: block;
+}
+
+/* Блок с текстом выезжает снизу */
+.project-popup__details {
   width: 100%;
-  max-width: 852px;
-  max-height: 0;
-  overflow: hidden;
-  opacity: 0;
-  transition:
-    max-height 0.35s ease-in-out,
-    opacity 0.35s ease-in-out,
-    margin 0.35s ease-in-out;
+  padding: clamp(16px, 3vh, 28px) clamp(16px, 12vw, 200px) clamp(8px, 2vh, 16px);
+  background: #fffefe;
+  border-top: 0.5px solid var(--border);
+  transform: translateY(100%);
+  transition: transform var(--popup-duration) ease-in-out;
+  -webkit-transition: -webkit-transform var(--popup-duration) ease-in-out;
+  max-height: min(50vh, 420px);
+  overflow-y: auto;
+}
+
+.project-popup__footer.is-expanded .project-popup__details {
+  transform: translateY(0);
+  -webkit-transform: translateY(0);
+}
+
+.project-popup__facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  column-gap: clamp(48px, 14vw, 200px);
+  row-gap: clamp(10px, 1.5vh, 16px);
   margin: 0;
 }
 
-.project-popup__footer.is-expanded .project-popup__description {
-  max-height: 40vh;
-  opacity: 1;
-  margin-bottom: 4px;
+.project-popup__facts dt {
+  margin: 0;
+  font-family: "Raleway", sans-serif;
+  font-weight: 700;
+  font-size: clamp(10px, 0.833vw, 12px);
+  line-height: 1.45;
+  color: #000;
+  text-transform: none;
 }
 
-.project-popup__description-text {
+.project-popup__facts dd {
   margin: 0;
   font-family: "Raleway", sans-serif;
   font-weight: 400;
