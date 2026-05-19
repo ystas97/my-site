@@ -5,7 +5,7 @@
   grid.innerHTML = PROJECTS.map(
     (p) => `
     <article class="card">
-      <a class="hover-wrap card__inner" href="#">
+      <a class="card__inner" href="#">
         <div class="card__media">
           <img src="assets/images/${p.image}" alt="" loading="lazy" />
         </div>
