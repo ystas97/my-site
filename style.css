@@ -330,23 +330,68 @@ body.popup-open {
 
 .project-popup__footer {
   flex-shrink: 0;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: end;
-  gap: 12px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
   min-height: clamp(64px, 10vh, 82px);
   padding: clamp(10px, 2vh, 18px) clamp(16px, 12vw, 200px);
   background: #fffefe;
   border-top: 0.5px solid var(--border);
 }
 
-.project-popup__collapse {
-  align-self: start;
+.project-popup__expand {
   padding: 4px 0;
   border: none;
   background: transparent;
   cursor: pointer;
   line-height: 0;
+}
+
+.project-popup__expand img {
+  display: block;
+  transition: transform 0.25s ease-in-out;
+}
+
+.project-popup__footer.is-expanded .project-popup__expand img {
+  transform: rotate(180deg);
+}
+
+.project-popup__description {
+  width: 100%;
+  max-width: 852px;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition:
+    max-height 0.35s ease-in-out,
+    opacity 0.35s ease-in-out,
+    margin 0.35s ease-in-out;
+  margin: 0;
+}
+
+.project-popup__footer.is-expanded .project-popup__description {
+  max-height: 40vh;
+  opacity: 1;
+  margin-bottom: 4px;
+}
+
+.project-popup__description-text {
+  margin: 0;
+  font-family: "Raleway", sans-serif;
+  font-weight: 400;
+  font-size: clamp(10px, 0.833vw, 12px);
+  line-height: 1.45;
+  color: #000;
+  text-transform: none;
+}
+
+.project-popup__footer-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 24px;
+  width: 100%;
 }
 
 .project-popup__meta {
@@ -407,14 +452,8 @@ body.popup-open {
     aspect-ratio: 852 / 476;
   }
 
-  .project-popup__footer {
-    grid-template-columns: auto 1fr;
-    grid-template-rows: auto auto;
-  }
-
-  .project-popup__year {
-    grid-column: 2;
-    justify-self: end;
+  .project-popup__footer-row {
+    flex-wrap: wrap;
   }
 }
 

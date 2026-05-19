@@ -3,14 +3,17 @@
   if (!popup || typeof PROJECTS === "undefined") return;
 
   const panel = popup.querySelector(".project-popup__panel");
+  const footer = popup.querySelector(".project-popup__footer");
   const imageEl = popup.querySelector(".project-popup__image");
   const titleEl = popup.querySelector(".project-popup__title");
   const cityEl = popup.querySelector(".project-popup__city");
   const yearEl = popup.querySelector(".project-popup__year");
+  const descriptionEl = popup.querySelector(".project-popup__description");
+  const descriptionTextEl = popup.querySelector(".project-popup__description-text");
   const btnPrev = popup.querySelector(".project-popup__arrow--prev");
   const btnNext = popup.querySelector(".project-popup__arrow--next");
   const btnClose = popup.querySelector(".project-popup__close");
-  const btnCollapse = popup.querySelector(".project-popup__collapse");
+  const btnExpand = popup.querySelector(".project-popup__expand");
 
   let projectIndex = 0;
   let slideIndex = 0;
@@ -27,6 +30,20 @@
     return [project.image];
   }
 
+  function setDescriptionOpen(open) {
+    footer.classList.toggle("is-expanded", open);
+    btnExpand.setAttribute("aria-expanded", String(open));
+    btnExpand.setAttribute(
+      "aria-label",
+      open ? "Скрыть описание проекта" : "Показать описание проекта"
+    );
+    if (open) {
+      descriptionEl.hidden = false;
+    } else {
+      descriptionEl.hidden = true;
+    }
+  }
+
   function updateSlide() {
     const file = gallery[slideIndex];
     imageEl.src = `assets/images/${file}`;
@@ -40,6 +57,7 @@
     titleEl.textContent = project.title;
     cityEl.textContent = project.city;
     yearEl.textContent = project.year;
+    descriptionTextEl.textContent = project.description || "";
   }
 
   function open(index) {
@@ -47,6 +65,7 @@
     const project = PROJECTS[projectIndex];
     gallery = galleryFor(project);
     slideIndex = 0;
+    setDescriptionOpen(false);
     updateMeta();
     updateSlide();
 
@@ -60,6 +79,7 @@
   }
 
   function close() {
+    setDescriptionOpen(false);
     popup.classList.remove("is-open");
     document.body.classList.remove("popup-open");
 
@@ -87,6 +107,10 @@
     updateSlide();
   }
 
+  function toggleDescription() {
+    setDescriptionOpen(!footer.classList.contains("is-expanded"));
+  }
+
   document.getElementById("projects")?.addEventListener("click", (e) => {
     const link = e.target.closest(".card__inner");
     if (!link) return;
@@ -96,7 +120,7 @@
   });
 
   btnClose?.addEventListener("click", close);
-  btnCollapse?.addEventListener("click", close);
+  btnExpand?.addEventListener("click", toggleDescription);
   btnPrev?.addEventListener("click", () => showSlide(-1));
   btnNext?.addEventListener("click", () => showSlide(1));
 

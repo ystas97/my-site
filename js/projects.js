@@ -112,3 +112,11 @@ const PROJECTS = [
     gallery: ["project-08.jpg", "project-09.png", "project-10.png"],
   },
 ];
+
+PROJECTS.forEach((project) => {
+  if (project.description) return;
+  project.description =
+    `Проект «${project.title}» — ${project.city}, ${project.year}. ` +
+    "Архитектурная концепция, разработка проектной и рабочей документации. " +
+    "В основе решения — функциональная планировка, связь с городской средой и выразительность фасадов.";
+});
