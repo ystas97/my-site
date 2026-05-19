@@ -1,28 +1,328 @@
-* {
+:root {
+  --page-max: 1480px;
+  --cell: 360px;
+  --border: #6e6e6e;
+  --border-alt: #696867;
+  --text: #000;
+  --text-muted: #5b5b5b;
+  --text-title: #696867;
+  --header-h: 79px;
+}
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
-  font-family: system-ui, -apple-system, sans-serif;
-  line-height: 1.5;
-  max-width: 36rem;
-  margin: 3rem auto;
-  padding: 0 1.25rem;
-  color: #1a1a1a;
-  background: #fafafa;
-}
-
-h1 {
-  font-size: 1.75rem;
-  margin-bottom: 0.5rem;
-}
-
-.meta {
-  margin-top: 2rem;
-  font-size: 0.9rem;
-  color: #555;
+  margin: 0;
+  background: #fff;
+  color: var(--text);
 }
 
 a {
-  color: #0969da;
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+.page {
+  margin: 0 auto;
+  max-width: var(--page-max);
+  min-height: 100vh;
+}
+
+/* Header */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 24px;
+  height: var(--header-h);
+  padding: 0 30px 0 65px;
+  background: #fff;
+  border-bottom: 1px solid var(--text);
+}
+
+.header__logo img {
+  height: 24px;
+  width: auto;
+}
+
+.header__nav {
+  display: flex;
+  gap: 20px;
+  font-family: "Raleway", sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: lowercase;
+}
+
+.header__nav a:hover {
+  opacity: 0.6;
+}
+
+.header__telegram {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.header__telegram img {
+  width: 26px;
+  height: 26px;
+  object-fit: cover;
+}
+
+/* Grid */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-left: 0.5px solid var(--border);
+}
+
+.card {
+  position: relative;
+  min-height: var(--cell);
+  background: #fff;
+  border-top: 0.5px solid var(--border);
+  border-right: 0.5px solid var(--border);
+}
+
+.card--b {
+  border-color: var(--border-alt);
+}
+
+.card--c {
+  border-color: var(--border-alt);
+}
+
+.card__link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: var(--cell);
+  padding: 0 80px 24px;
+  height: 100%;
+}
+
+.card__media {
+  width: 200px;
+  height: 200px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Variant A */
+.card--a .card__link {
+  padding-top: 79px;
+}
+
+.card--a .card__meta {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  width: 200px;
+  margin-top: 15px;
+}
+
+.card--a .card__title {
+  margin: 0;
+  flex: 1;
+  font-family: "Raleway", sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  line-height: 1.35;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.card--a .card__year {
+  font-family: "Montserrat", sans-serif;
+  font-weight: 400;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.card--a .card__location {
+  margin: 6px 0 0;
+  width: 200px;
+  text-align: center;
+  font-family: "Montserrat", sans-serif;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Variant B */
+.card--b .card__link {
+  padding: 28px 18px 20px;
+  align-items: stretch;
+}
+
+.card--b .card__year--top {
+  align-self: flex-end;
+  margin: 0 18px 8px 0;
+  font-family: "Montserrat", sans-serif;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.card--b .card__media {
+  margin: 0 auto;
+}
+
+.card--b .card__rule {
+  width: 100%;
+  margin: 16px 0 0;
+  border: none;
+  border-top: 0.5px solid var(--border-alt);
+}
+
+.card--b .card__footer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.card--b .card__title {
+  margin: 0;
+  flex: 1;
+  font-family: "Raleway", sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  line-height: 1.35;
+  text-transform: uppercase;
+  color: var(--text-title);
+}
+
+.card--b .card__location {
+  margin: 0;
+  font-family: "Montserrat", sans-serif;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Variant C — centered stack */
+.card--c .card__link {
+  justify-content: center;
+  gap: 15px;
+  padding: 24px 80px;
+}
+
+.card--c .card__meta {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  width: 200px;
+}
+
+.card--c .card__title {
+  margin: 0;
+  flex: 1;
+  font-family: "Raleway", sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1.35;
+  text-transform: uppercase;
+  color: var(--text-title);
+}
+
+.card--c .card__year {
+  font-family: "Montserrat", sans-serif;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .header {
+    padding: 0 20px;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "logo telegram"
+      "nav nav";
+    height: auto;
+    padding-top: 16px;
+    padding-bottom: 16px;
+    row-gap: 12px;
+  }
+
+  .header__logo {
+    grid-area: logo;
+  }
+
+  .header__nav {
+    grid-area: nav;
+  }
+
+  .header__telegram {
+    grid-area: telegram;
+    justify-self: end;
+  }
+
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .card__link {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .card--a .card__link {
+    padding-top: 48px;
+  }
+
+  .card--a .card__meta,
+  .card--a .card__location,
+  .card--c .card__meta {
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
 }
