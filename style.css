@@ -13,10 +13,13 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  overflow-x: clip;
 }
 
 body {
   margin: 0;
+  width: 100%;
+  overflow-x: clip;
   background: #fff;
   color: #000;
 }
@@ -33,7 +36,9 @@ img {
 
 .page {
   width: 100%;
+  max-width: 100%;
   min-height: 100vh;
+  overflow-x: clip;
 }
 
 /* Шапка — масштаб от эталона 1440 */
@@ -88,7 +93,7 @@ img {
   grid-template-columns: repeat(4, 1fr);
   width: 100%;
   border-left: 0.5px solid var(--border);
-  overflow: visible;
+  overflow-x: clip;
 }
 
 .card {
@@ -97,8 +102,9 @@ img {
   background: #fff;
   border-top: 0.5px solid var(--border);
   border-right: 0.5px solid var(--border);
-  overflow: visible;
+  overflow: clip;
   container-type: inline-size;
+  isolation: isolate;
 }
 
 /* Пропорции внутри карточки от эталона 360×360 */
