@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Админка — antonovka.studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Raleway:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../admin.css" />
+</head>
+<body>
+  <div id="loginScreen" class="admin-login">
+    <form id="loginForm" class="admin-login__card">
+      <h1 class="admin-login__title">antonovka.studio</h1>
+      <p class="admin-login__hint">Вход в админ-панель</p>
+      <label class="admin-field">
+        <span>Email</span>
+        <input type="email" name="email" autocomplete="username" required />
+      </label>
+      <label class="admin-field">
+        <span>Пароль</span>
+        <input type="password" name="password" autocomplete="current-password" required />
+      </label>
+      <p id="loginError" class="admin-error" hidden></p>
+      <button type="submit" class="admin-btn admin-btn--primary">Войти</button>
+    </form>
+  </div>
+
+  <div id="appScreen" class="admin-app" hidden>
+    <header class="admin-top">
+      <div class="admin-top__left">
+        <a class="admin-top__brand" href="../index.html">antonovka.studio</a>
+        <span class="admin-top__badge">админка</span>
+      </div>
+      <div class="admin-top__actions">
+        <button type="button" id="btnNewProject" class="admin-btn">+ Новый проект</button>
+        <button type="button" id="btnPublishSite" class="admin-btn admin-btn--primary">Опубликовать сайт</button>
+        <a href="../index.html" class="admin-btn admin-btn--ghost" target="_blank" rel="noopener">Открыть сайт</a>
+        <button type="button" id="btnLogout" class="admin-btn admin-btn--ghost">Выйти</button>
+      </div>
+    </header>
+
+    <div class="admin-layout">
+      <aside class="admin-sidebar">
+        <p class="admin-sidebar__label">Проекты · перетащите для порядка</p>
+        <div class="admin-sidebar__scroll">
+          <ul id="projectList" class="admin-project-list" aria-label="Список проектов, перетаскивание меняет порядок на сайте"></ul>
+        </div>
+      </aside>
+
+      <main class="admin-main">
+        <p id="emptyState" class="admin-empty">Выберите проект слева или создайте новый.</p>
+
+        <form id="projectForm" class="admin-form" hidden>
+          <div class="admin-form__head">
+            <h2 id="formTitle" class="admin-form__title">Проект</h2>
+            <label class="admin-toggle admin-form__publish-toggle">
+              <input type="checkbox" name="published" class="admin-toggle__input" />
+              <span class="admin-toggle__track" aria-hidden="true"></span>
+              <span class="admin-toggle__label">На сайте</span>
+            </label>
+          </div>
+
+          <div class="admin-grid">
+            <label class="admin-field">
+              <span>Название</span>
+              <input type="text" name="title" required />
+            </label>
+            <label class="admin-field">
+              <span>Город</span>
+              <input type="text" name="city" required />
+            </label>
+            <label class="admin-field">
+              <span>Год</span>
+              <input type="text" name="year" required />
+            </label>
+            <input type="hidden" name="sort_order" value="0" />
+            <label class="admin-field">
+              <span>Статус</span>
+              <input type="text" name="status" />
+            </label>
+            <label class="admin-field">
+              <span>Типология</span>
+              <input type="text" name="typology" />
+            </label>
+            <label class="admin-field admin-field--full">
+              <span>Описание</span>
+              <textarea name="description" rows="6"></textarea>
+            </label>
+          </div>
+
+          <section class="admin-media">
+            <h3>Обложка карточки</h3>
+            <div class="admin-media__row">
+              <div class="admin-preview">
+                <img id="coverPreview" alt="" />
+              </div>
+              <label class="admin-upload">
+                <span>Загрузить обложку</span>
+                <input type="file" id="coverInput" accept="image/jpeg,image/png,image/webp,image/gif" />
+              </label>
+            </div>
+          </section>
+
+          <section class="admin-media">
+            <h3>Галерея в попапе</h3>
+            <input
+              type="file"
+              id="galleryInput"
+              class="admin-file-input"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              multiple
+            />
+            <ul id="galleryList" class="admin-gallery"></ul>
+          </section>
+
+          <footer class="admin-form__footer">
+            <div class="admin-form__footer-row">
+              <button type="button" id="btnDelete" class="admin-btn admin-btn--danger">Удалить</button>
+              <div class="admin-form__footer-actions">
+                <button type="button" id="btnSave" class="admin-btn admin-btn--primary">Сохранить</button>
+              </div>
+            </div>
+          </footer>
+        </form>
+      </main>
+    </div>
+  </div>
+
+  <div id="toast" class="admin-toast" hidden></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/supabase-config.js"></script>
+  <script src="../js/supabase-client.js"></script>
+  <script src="../js/admin-publish.js"></script>
+  <script src="../js/admin.js"></script>
+</body>
+</html>
