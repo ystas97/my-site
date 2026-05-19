@@ -16,6 +16,30 @@
     return btoa(binary);
   }
 
+  async function fetchDeployFile(path) {
+    const normalized = path.replace(/^\//, "");
+    const url = new URL(`../${normalized}`, window.location.href);
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) {
+      return null;
+    }
+
+    if (BINARY_RE.test(normalized)) {
+      const buffer = await res.arrayBuffer();
+      return {
+        path: normalized,
+        content: arrayBufferToBase64(buffer),
+        encoding: "base64",
+      };
+    }
+
+    return {
+      path: normalized,
+      content: await res.text(),
+      encoding: "utf-8",
+    };
+  }
+
   async function collectDeployFiles() {
     const manifestRes = await fetch(MANIFEST_URL, { cache: "no-store" });
     if (!manifestRes.ok) {
@@ -29,27 +53,31 @@
 
     const files = [];
     for (const path of paths) {
-      const url = new URL(`../${path.replace(/^\//, "")}`, window.location.href);
-      const res = await fetch(url, { cache: "no-store" });
-      if (!res.ok) {
+      const file = await fetchDeployFile(path);
+      if (!file) {
         throw new Error(`Файл не найден: ${path}`);
       }
-
-      if (BINARY_RE.test(path)) {
-        const buffer = await res.arrayBuffer();
-        files.push({
-          path: path.replace(/^\//, ""),
-          content: arrayBufferToBase64(buffer),
-          encoding: "base64",
-        });
-      } else {
-        files.push({
-          path: path.replace(/^\//, ""),
-          content: await res.text(),
-          encoding: "utf-8",
-        });
-      }
+      files.push(file);
     }
+
+    /* На GitHub Pages нужен publishable key — файл в .gitignore, но есть локально */
+    const hasConfig = files.some((f) => f.path === "js/supabase-config.js");
+    if (!hasConfig) {
+      const config = await fetchDeployFile("js/supabase-config.js");
+      if (!config) {
+        throw new Error(
+          "Нет js/supabase-config.js — создайте из supabase-config.example.js",
+        );
+      }
+      if (
+        config.content.includes("YOUR_KEY") ||
+        config.content.includes("YOUR_PROJECT")
+      ) {
+        throw new Error("Заполните ключи в js/supabase-config.js перед публикацией");
+      }
+      files.push(config);
+    }
+
     return files;
   }
 
