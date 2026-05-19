@@ -105,6 +105,8 @@ img {
   border-right: 0.5px solid var(--border);
   overflow: visible;
   container-type: inline-size;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
 .card.is-card-hovered {
@@ -185,18 +187,36 @@ img {
   color: var(--text-muted);
 }
 
-/* Hover */
+/* Hover — только transform в transition (Safari дёргается от анимации box-shadow) */
 [class*="hover-wrap"] {
   transform: translate3d(0, 0, 0) scale(1);
-  transition:
-    transform 0.25s ease-in-out,
-    box-shadow 0.25s ease-in-out;
+  -webkit-transform: translate3d(0, 0, 0) scale(1);
+  transition: transform 0.25s ease-in-out;
+  -webkit-transition: -webkit-transform 0.25s ease-in-out;
   transform-origin: center center;
+  -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
 }
 
+/* Десктоп / Safari: CSS :hover на ячейке карточки — без JS, без дрожи */
+@media (hover: hover) and (pointer: fine) {
+  .card:hover {
+    z-index: 10;
+  }
+
+  .card:hover [class*="hover-wrap"] {
+    transform: translate3d(0, 0, 0) scale(1.08);
+    -webkit-transform: translate3d(0, 0, 0) scale(1.08);
+    box-shadow:
+      0 0 25px rgba(0, 0, 0, 0.12),
+      0 0 50px rgba(0, 0, 0, 0.08);
+  }
+}
+
+/* Тач: класс из cards-hover.js */
 .is-hovered {
   transform: translate3d(0, 0, 0) scale(1.08);
+  -webkit-transform: translate3d(0, 0, 0) scale(1.08);
   box-shadow:
     0 0 25px rgba(0, 0, 0, 0.12),
     0 0 50px rgba(0, 0, 0, 0.08);

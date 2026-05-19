@@ -1,44 +1,19 @@
+/* Только для тач-устройств. На десктопе (в т.ч. Safari) — CSS :hover */
 (function () {
-  const HOVER_ANIM_MS = 250;
+  if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
 
-  function initCard(card) {
+  document.querySelectorAll(".card").forEach((card) => {
     const wrap = card.querySelector('[class*="hover-wrap"]');
     if (!wrap) return;
-
-    let leaveTimer = null;
-
-    const setState = (on) => {
-      if (on) {
-        if (leaveTimer) {
-          clearTimeout(leaveTimer);
-          leaveTimer = null;
-        }
-        wrap.classList.add("is-hovered");
-        card.classList.add("is-card-hovered");
-      } else {
-        wrap.classList.remove("is-hovered");
-        card.classList.remove("is-card-hovered");
-        if (leaveTimer) clearTimeout(leaveTimer);
-        leaveTimer = setTimeout(() => {
-          leaveTimer = null;
-        }, HOVER_ANIM_MS);
-      }
-    };
-
-    /* События на .card — зона наведения не меняется при scale внутри */
-    card.addEventListener("mouseenter", () => setState(true));
-    card.addEventListener("mouseleave", () => setState(false));
 
     card.addEventListener(
       "click",
       () => {
-        if (window.matchMedia("(hover: none)").matches) {
-          setState(!wrap.classList.contains("is-hovered"));
-        }
+        const on = !wrap.classList.contains("is-hovered");
+        wrap.classList.toggle("is-hovered", on);
+        card.classList.toggle("is-card-hovered", on);
       },
       { passive: true }
     );
-  }
-
-  document.querySelectorAll(".card").forEach(initCard);
+  });
 })();
