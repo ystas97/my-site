@@ -102,9 +102,8 @@ img {
   background: #fff;
   border-top: 0.5px solid var(--border);
   border-right: 0.5px solid var(--border);
-  overflow: clip;
+  overflow: visible;
   container-type: inline-size;
-  isolation: isolate;
 }
 
 /* Пропорции внутри карточки от эталона 360×360 */
