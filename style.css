@@ -10,6 +10,8 @@
   --popup-duration: 0.45s;
   --footer-shadow-gap: 28px;
   --about-person-size: 300px;
+  --cursor-color: #afcb24;
+  --cursor-size: 10px;
 }
 
 *,
@@ -29,6 +31,30 @@ body {
   overflow-x: clip;
   background: #fff;
   color: #000;
+}
+
+/* Кастомный курсор — векторный кружок (js/custom-cursor.js), только мышь */
+@media (hover: hover) and (pointer: fine) {
+  html,
+  body,
+  body * {
+    cursor: none !important;
+  }
+}
+
+.cursor-dot {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 2147483647;
+  width: var(--cursor-size);
+  height: var(--cursor-size);
+  margin: 0;
+  border-radius: 50%;
+  background: var(--cursor-color);
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform;
 }
 
 a {
@@ -513,7 +539,6 @@ body.popup-open .page {
   padding: 0;
   border: none;
   background: transparent;
-  cursor: pointer;
 }
 
 .project-popup__close span {
@@ -576,13 +601,11 @@ body.popup-open .page {
   padding: 12px;
   border: none;
   background: transparent;
-  cursor: pointer;
   line-height: 0;
 }
 
 .project-popup__arrow:disabled {
   opacity: 0.25;
-  cursor: default;
 }
 
 .project-popup__footer {
@@ -658,7 +681,6 @@ body.popup-open .page {
   padding: 4px 0;
   border: none;
   background: transparent;
-  cursor: pointer;
   line-height: 0;
 }
 

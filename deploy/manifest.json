@@ -9,6 +9,7 @@
     "js/admin.js",
     "js/admin-publish.js",
     "js/cards-hover.js",
+    "js/custom-cursor.js",
     "js/header-panels.js",
     "js/load-projects.js",
     "js/project-popup.js",
