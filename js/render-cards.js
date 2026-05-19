@@ -7,7 +7,7 @@
     <article class="card">
       <a class="hover-wrap card__inner" href="#">
         <div class="card__media">
-          <img src="assets/images/${p.image}" alt="" width="200" height="200" loading="lazy" />
+          <img src="assets/images/${p.image}" alt="" loading="lazy" />
         </div>
         <div class="card__text">
           <div class="card__row">

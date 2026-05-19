@@ -1,10 +1,8 @@
+/* Эталон макета: 1440px (4×360). На экранах шире всё масштабируется пропорционально. */
 :root {
-  --page-width: 1440px;
-  --card-size: 360px;
-  --photo-size: 200px;
+  --design-width: 1440;
   --border: #6e6e6e;
   --text-muted: #5b5b5b;
-  --header-h: 79px;
 }
 
 *,
@@ -34,12 +32,11 @@ img {
 }
 
 .page {
-  margin: 0 auto;
-  max-width: var(--page-width);
+  width: 100%;
   min-height: 100vh;
 }
 
-/* Header */
+/* Шапка — масштаб от эталона 1440 */
 .header {
   position: sticky;
   top: 0;
@@ -47,24 +44,24 @@ img {
   display: grid;
   grid-template-columns: 1fr auto auto;
   align-items: center;
-  gap: 24px;
-  height: var(--header-h);
-  padding: 0 30px 0 65px;
+  gap: clamp(16px, 1.667vw, 32px);
+  height: clamp(59px, 5.486vw, 110px);
+  padding: 0 clamp(20px, 2.083vw, 40px) 0 clamp(24px, 4.514vw, 80px);
   background: #fff;
   border-bottom: 1px solid #000;
 }
 
 .header__logo img {
-  height: 24px;
+  height: clamp(20px, 1.667vw, 36px);
   width: auto;
 }
 
 .header__nav {
   display: flex;
-  gap: 20px;
+  gap: clamp(12px, 1.389vw, 28px);
   font-family: "Raleway", sans-serif;
   font-weight: 700;
-  font-size: 12px;
+  font-size: clamp(11px, 0.833vw, 20px);
   text-transform: lowercase;
 }
 
@@ -74,38 +71,37 @@ img {
 
 .header__telegram {
   display: flex;
-  width: 26px;
-  height: 26px;
+  width: clamp(22px, 1.806vw, 40px);
+  height: clamp(22px, 1.806vw, 40px);
   flex-shrink: 0;
 }
 
 .header__telegram img {
-  width: 26px;
-  height: 26px;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
 }
 
-/* Сетка 1440 = 4 × 360 */
+/* Сетка на всю ширину: 4 колонки по 25% экрана */
 .grid {
   display: grid;
-  grid-template-columns: repeat(4, var(--card-size));
-  width: var(--page-width);
-  max-width: 100%;
-  margin: 0 auto;
+  grid-template-columns: repeat(4, 1fr);
+  width: 100%;
   border-left: 0.5px solid var(--border);
   overflow: visible;
 }
 
 .card {
   position: relative;
-  width: var(--card-size);
-  height: var(--card-size);
+  aspect-ratio: 1;
   background: #fff;
   border-top: 0.5px solid var(--border);
   border-right: 0.5px solid var(--border);
   overflow: visible;
+  container-type: inline-size;
 }
 
+/* Пропорции внутри карточки от эталона 360×360 */
 .card__inner {
   display: flex;
   flex-direction: column;
@@ -113,14 +109,14 @@ img {
   justify-content: flex-start;
   width: 100%;
   height: 100%;
-  padding: 79px 80px 24px;
+  padding: 21.944% 22.222% 6.667%;
   background: #fff;
 }
 
 .card__media {
-  width: var(--photo-size);
-  height: var(--photo-size);
-  border-radius: 10px;
+  width: 55.556%;
+  aspect-ratio: 1;
+  border-radius: 2.778cqw;
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -132,15 +128,15 @@ img {
 }
 
 .card__text {
-  width: var(--photo-size);
-  margin-top: 15px;
+  width: 55.556%;
+  margin-top: 4.167cqw;
 }
 
 .card__row {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 8px;
+  gap: 2.222cqw;
 }
 
 .card__title {
@@ -148,7 +144,7 @@ img {
   flex: 1;
   font-family: "Raleway", sans-serif;
   font-weight: 700;
-  font-size: 8px;
+  font-size: 2.222cqw;
   line-height: normal;
   text-transform: uppercase;
   color: var(--text-muted);
@@ -157,7 +153,7 @@ img {
 .card__year {
   font-family: "Montserrat", sans-serif;
   font-weight: 400;
-  font-size: 6px;
+  font-size: 1.667cqw;
   line-height: normal;
   text-transform: uppercase;
   color: var(--text-muted);
@@ -165,16 +161,16 @@ img {
 }
 
 .card__city {
-  margin: 6px 0 0;
+  margin: 1.667cqw 0 0;
   font-family: "Montserrat", sans-serif;
   font-weight: 400;
-  font-size: 6px;
+  font-size: 1.667cqw;
   line-height: normal;
   text-transform: uppercase;
   color: var(--text-muted);
 }
 
-/* Hover (как в макете Tilda) */
+/* Hover */
 [class*="hover-wrap"] {
   transform: scale(1);
   transition:
@@ -191,28 +187,11 @@ img {
     0 0 50px rgba(0, 0, 0, 0.08);
 }
 
-/* Адаптив: ниже 1440 — резиновая сетка */
-@media (max-width: 1439px) {
-  .grid {
-    width: 100%;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  }
-
-  .card {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 1;
-  }
-
-  .card__inner {
-    padding: 48px 24px 20px;
-  }
-}
-
 @media (max-width: 900px) {
   .header {
-    padding: 16px 20px;
     height: auto;
+    padding-top: 16px;
+    padding-bottom: 16px;
     grid-template-columns: 1fr auto;
     grid-template-areas:
       "logo telegram"
@@ -234,7 +213,7 @@ img {
   }
 
   .grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
