@@ -8,7 +8,10 @@
   const projectList = document.getElementById("projectList");
   const projectForm = document.getElementById("projectForm");
   const emptyState = document.getElementById("emptyState");
+  const coverPreviewWrap = document.getElementById("coverPreviewWrap");
   const coverPreview = document.getElementById("coverPreview");
+  const coverMediaStatus = document.getElementById("coverMediaStatus");
+  const galleryMediaStatus = document.getElementById("galleryMediaStatus");
   const coverInput = document.getElementById("coverInput");
   const galleryInput = document.getElementById("galleryInput");
   const galleryList = document.getElementById("galleryList");
@@ -20,7 +23,6 @@
 
   let projects = [];
   let currentId = null;
-  let pendingCoverFile = null;
   let pendingGalleryFiles = [];
   let isBusy = false;
   let isLoggingIn = false;
@@ -151,22 +153,61 @@
     }));
   }
 
+  const EYE_OPEN_SVG = `<svg class="admin-project-list__eye-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+  const EYE_OFF_SVG = `<svg class="admin-project-list__eye-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
+
   function renderProjectList() {
     projectList.innerHTML = projects
       .map((p) => {
         const active = p.id === currentId ? " is-active" : "";
-        const draft = p.published ? "" : ' <span class="admin-project-list__badge is-draft">черновик</span>';
+        const eyeClass = p.published ? "" : " is-off";
+        const eyeSvg = p.published ? EYE_OPEN_SVG : EYE_OFF_SVG;
+        const checked = p.published ? " checked" : "";
+        const visTitle = p.published ? "Виден на сайте" : "Скрыт с сайта";
         return `
         <li class="admin-project-list__item${active}" data-id="${p.id}" draggable="true">
           <span class="admin-project-list__handle" title="Перетащить" aria-hidden="true">⋮⋮</span>
           <button type="button" class="admin-project-list__btn" data-select-id="${p.id}">
             <span class="admin-project-list__title">${escapeHtml(p.title)}</span>
             <span class="admin-project-list__meta">${escapeHtml(p.city)} · ${escapeHtml(p.year)}</span>
-            ${draft}
           </button>
+          <div class="admin-project-list__visibility" title="${visTitle}">
+            <span class="admin-project-list__eye${eyeClass}" aria-hidden="true">${eyeSvg}</span>
+            <label class="admin-toggle admin-toggle--list" title="${visTitle}">
+              <input type="checkbox" class="admin-toggle__input" data-publish-toggle="${p.id}"${checked} />
+              <span class="admin-toggle__track" aria-hidden="true"></span>
+            </label>
+          </div>
         </li>`;
       })
       .join("");
+  }
+
+  async function setProjectPublished(projectId, published) {
+    if (isBusy) return;
+
+    setBusy(true);
+    try {
+      const supabase = client();
+      const { error } = await supabase
+        .from("projects")
+        .update({ published })
+        .eq("id", projectId);
+      if (error) throw error;
+
+      const project = projects.find((p) => p.id === projectId);
+      if (project) project.published = published;
+
+      renderProjectList();
+      notifyMainSiteRefresh();
+      showToast(published ? "Проект показан на сайте" : "Проект скрыт с сайта");
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || "Не удалось изменить видимость", true);
+      renderProjectList();
+    } finally {
+      setBusy(false);
+    }
   }
 
   function applySortOrderToProjects() {
@@ -224,12 +265,23 @@
 
     projectList.addEventListener("click", (e) => {
       if (suppressClick) return;
+      if (e.target.closest(".admin-project-list__visibility")) return;
       const btn = e.target.closest("[data-select-id]");
       if (!btn) return;
       selectProject(btn.dataset.selectId);
     });
 
+    projectList.addEventListener("change", (e) => {
+      const input = e.target.closest("[data-publish-toggle]");
+      if (!input) return;
+      void setProjectPublished(input.dataset.publishToggle, input.checked);
+    });
+
     projectList.addEventListener("dragstart", (e) => {
+      if (e.target.closest(".admin-project-list__visibility")) {
+        e.preventDefault();
+        return;
+      }
       const item = e.target.closest(".admin-project-list__item");
       if (!item) return;
       dragId = item.dataset.id;
@@ -282,10 +334,180 @@
   }
 
   function clearPendingFiles() {
-    pendingCoverFile = null;
     pendingGalleryFiles = [];
     coverInput.value = "";
     galleryInput.value = "";
+    setMediaStatus("cover", "");
+    setMediaStatus("gallery", "");
+    if (coverPreviewWrap) {
+      coverPreviewWrap.classList.remove("is-uploading");
+    }
+  }
+
+  function setMediaStatus(which, text, busy) {
+    const el = which === "cover" ? coverMediaStatus : galleryMediaStatus;
+    if (!el) return;
+    if (!text) {
+      el.hidden = true;
+      el.textContent = "";
+      el.classList.remove("is-busy");
+      return;
+    }
+    el.hidden = false;
+    el.textContent = text;
+    el.classList.toggle("is-busy", Boolean(busy));
+  }
+
+  function resetCoverPreview() {
+    if (!coverPreviewWrap || !coverPreview) return;
+    coverPreview.onload = null;
+    coverPreview.onerror = null;
+    coverPreview.removeAttribute("src");
+    coverPreviewWrap.classList.remove("is-loading", "is-uploading", "is-error");
+    coverPreviewWrap.classList.add("is-empty");
+  }
+
+  function setCoverPreviewUrl(url) {
+    if (!coverPreviewWrap || !coverPreview) return;
+    if (!url) {
+      resetCoverPreview();
+      return;
+    }
+
+    coverPreviewWrap.classList.remove("is-empty", "is-error", "is-uploading");
+    coverPreviewWrap.classList.add("is-loading");
+
+    coverPreview.onload = () => {
+      coverPreviewWrap.classList.remove("is-loading");
+    };
+    coverPreview.onerror = () => {
+      coverPreviewWrap.classList.remove("is-loading");
+      coverPreviewWrap.classList.add("is-empty", "is-error");
+      coverPreview.removeAttribute("src");
+    };
+    coverPreview.src = url;
+  }
+
+  function setCoverPreviewFile(file) {
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setCoverPreviewUrl(url);
+  }
+
+  async function uploadCoverNow(file) {
+    const projectId = currentId;
+    if (!projectId || isBusy || !file) return;
+
+    setCoverPreviewFile(file);
+    setBusy(true);
+    try {
+      const supabase = client();
+      const path = coverStoragePath(projectId, file.name);
+
+      if (coverPreviewWrap) coverPreviewWrap.classList.add("is-uploading");
+      setMediaStatus("cover", "Загрузка обложки…", true);
+
+      await uploadStorage(path, file);
+
+      const { error } = await supabase
+        .from("projects")
+        .update({ cover_path: path })
+        .eq("id", projectId);
+      if (error) throw error;
+
+      const project = projects.find((p) => p.id === projectId);
+      if (project) project.cover_path = path;
+
+      coverInput.value = "";
+      if (currentId === projectId) {
+        setCoverPreviewUrl(publicUrl(path));
+        setMediaStatus("cover", "Обложка загружена");
+      }
+      notifyMainSiteRefresh();
+      showToast("Обложка загружена");
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || "Не удалось загрузить обложку", true);
+    } finally {
+      if (currentId === projectId && coverPreviewWrap) {
+        coverPreviewWrap.classList.remove("is-uploading");
+      }
+      setBusy(false);
+    }
+  }
+
+  async function uploadGalleryFilesNow(files) {
+    const projectId = currentId;
+    if (!projectId || isBusy || !files.length) return;
+
+    const startIndex = pendingGalleryFiles.length;
+    pendingGalleryFiles.push(...files);
+    const project = getCurrentProject();
+    if (project) renderGallery(project);
+
+    setBusy(true);
+    try {
+      const supabase = client();
+      let project = getCurrentProject();
+      if (!project) throw new Error("Проект не найден");
+
+      let nextOrder =
+        project.project_images.length > 0
+          ? Math.max(...project.project_images.map((i) => i.sort_order)) + 1
+          : 0;
+
+      const total = files.length;
+
+      for (let i = 0; i < files.length; i += 1) {
+        const file = files[i];
+        const domIndex = startIndex + i;
+        const li = galleryList.querySelector(`[data-pending-index="${domIndex}"]`);
+        if (li) li.classList.add("is-uploading");
+
+        setMediaStatus("gallery", `Загрузка фото ${i + 1} из ${total}…`, true);
+
+        const path = galleryStoragePath(projectId, file.name, nextOrder);
+        await uploadStorage(path, file);
+
+        const { data: imgRow, error: imgError } = await supabase
+          .from("project_images")
+          .insert({
+            project_id: projectId,
+            storage_path: path,
+            sort_order: nextOrder,
+          })
+          .select("id, storage_path, sort_order")
+          .single();
+
+        if (imgError) throw imgError;
+        if (!imgRow?.id) throw new Error("Фото не добавилось в галерею");
+
+        const pendingIdx = pendingGalleryFiles.indexOf(file);
+        if (pendingIdx >= 0) pendingGalleryFiles.splice(pendingIdx, 1);
+
+        nextOrder += 1;
+      }
+
+      await loadProjects({ preserveFormDraft: true });
+      notifyMainSiteRefresh();
+      setMediaStatus("gallery", "Фото загружены");
+      showToast(total === 1 ? "Фото добавлено" : `Загружено фото: ${total}`);
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || "Не удалось загрузить фото", true);
+      await loadProjects({ preserveFormDraft: true });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function bindGalleryImageLoad(li) {
+    const img = li.querySelector("img");
+    if (!img) return;
+    li.classList.add("is-loading");
+    const done = () => li.classList.remove("is-loading");
+    img.addEventListener("load", done, { once: true });
+    img.addEventListener("error", done, { once: true });
   }
 
   function renderGallery(project) {
@@ -293,8 +515,9 @@
 
     project.project_images.forEach((img) => {
       items.push(`
-        <li class="admin-gallery__item" data-image-id="${img.id}" data-path="${escapeHtml(img.storage_path)}">
-          <img src="${publicUrl(img.storage_path)}" alt="" />
+        <li class="admin-gallery__item is-loading" draggable="true" data-image-id="${img.id}" data-path="${escapeHtml(img.storage_path)}">
+          <span class="admin-gallery__handle" title="Перетащить" aria-hidden="true">⋮⋮</span>
+          <img src="${publicUrl(img.storage_path)}" alt="" loading="lazy" draggable="false" />
           <button type="button" class="admin-gallery__remove" aria-label="Удалить">×</button>
         </li>
       `);
@@ -303,14 +526,25 @@
     pendingGalleryFiles.forEach((file, index) => {
       const url = URL.createObjectURL(file);
       items.push(`
-        <li class="admin-gallery__item" data-pending-index="${index}">
-          <img src="${url}" alt="" />
-          <span class="admin-project-list__badge is-draft" style="position:absolute;bottom:4px;left:4px;">новое</span>
+        <li class="admin-gallery__item" draggable="true" data-pending-index="${index}">
+          <span class="admin-gallery__handle" title="Перетащить" aria-hidden="true">⋮⋮</span>
+          <img src="${url}" alt="" draggable="false" />
+          <span class="admin-gallery__badge is-pending">загрузка…</span>
         </li>
       `);
     });
 
     galleryList.innerHTML = items.join("");
+
+    galleryList.querySelectorAll(".admin-gallery__item").forEach((li) => {
+      bindGalleryImageLoad(li);
+    });
+
+    if (pendingGalleryFiles.length) {
+      setMediaStatus("gallery", "Загрузка…", true);
+    } else if (project.project_images.length) {
+      setMediaStatus("gallery", "");
+    }
 
     galleryList.querySelectorAll(".admin-gallery__remove").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -318,6 +552,158 @@
         const imageId = li?.dataset.imageId;
         if (imageId) removeGalleryImage(imageId, li.dataset.path);
       });
+    });
+  }
+
+  function getGalleryOrderFromDom() {
+    return [...galleryList.querySelectorAll(".admin-gallery__item")]
+      .map((li) => {
+        if (li.dataset.imageId) {
+          return { type: "saved", id: li.dataset.imageId };
+        }
+        if (li.dataset.pendingIndex !== undefined) {
+          return { type: "pending", index: Number(li.dataset.pendingIndex) };
+        }
+        return null;
+      })
+      .filter(Boolean);
+  }
+
+  function galleryEntryKey(entry) {
+    return entry.type === "saved" ? `saved:${entry.id}` : `pending:${entry.index}`;
+  }
+
+  function applyGalleryOrder(order) {
+    const project = getCurrentProject();
+    if (!project) return;
+
+    const savedById = new Map(project.project_images.map((img) => [img.id, img]));
+    const newImages = [];
+    const newPending = [];
+
+    order.forEach((entry, sortOrder) => {
+      if (entry.type === "saved") {
+        const img = savedById.get(entry.id);
+        if (img) {
+          img.sort_order = sortOrder;
+          newImages.push(img);
+        }
+      } else {
+        const file = pendingGalleryFiles[entry.index];
+        if (file) newPending.push(file);
+      }
+    });
+
+    project.project_images = newImages;
+    pendingGalleryFiles = newPending;
+  }
+
+  async function saveGallerySortOrder() {
+    const project = getCurrentProject();
+    if (!project?.project_images.length || !currentId) return;
+
+    setBusy(true);
+    try {
+      const supabase = client();
+      const updates = project.project_images.map((img) =>
+        supabase.from("project_images").update({ sort_order: img.sort_order }).eq("id", img.id),
+      );
+      const results = await Promise.all(updates);
+      const failed = results.find((r) => r.error);
+      if (failed?.error) throw failed.error;
+
+      notifyMainSiteRefresh();
+      showToast("Порядок фото в галерее сохранён");
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || "Не удалось сохранить порядок фото", true);
+      await loadProjects({ preserveFormDraft: true });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function reorderGallery(dragKey, targetKey) {
+    if (!dragKey || !targetKey || dragKey === targetKey || isBusy) return;
+
+    const order = getGalleryOrderFromDom();
+    const keys = order.map(galleryEntryKey);
+    const fromIndex = keys.indexOf(dragKey);
+    const toIndex = keys.indexOf(targetKey);
+    if (fromIndex < 0 || toIndex < 0) return;
+
+    const [moved] = keys.splice(fromIndex, 1);
+    keys.splice(toIndex, 0, moved);
+
+    const newOrder = keys.map((key) => {
+      if (key.startsWith("saved:")) {
+        return { type: "saved", id: key.slice(6) };
+      }
+      return { type: "pending", index: Number(key.slice(8)) };
+    });
+
+    applyGalleryOrder(newOrder);
+    const project = getCurrentProject();
+    if (project) renderGallery(project);
+
+    const hadSaved = newOrder.some((e) => e.type === "saved");
+    if (hadSaved) await saveGallerySortOrder();
+  }
+
+  function setupGalleryDnD() {
+    let dragKey = null;
+
+    galleryList.addEventListener("dragstart", (e) => {
+      if (e.target.closest(".admin-gallery__remove")) {
+        e.preventDefault();
+        return;
+      }
+      const item = e.target.closest(".admin-gallery__item");
+      if (!item || isBusy) return;
+      const order = getGalleryOrderFromDom();
+      const index = [...galleryList.querySelectorAll(".admin-gallery__item")].indexOf(item);
+      const entry = order[index];
+      if (!entry) return;
+
+      dragKey = galleryEntryKey(entry);
+      item.classList.add("is-dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", dragKey);
+    });
+
+    galleryList.addEventListener("dragend", () => {
+      galleryList.querySelectorAll(".admin-gallery__item").forEach((el) => {
+        el.classList.remove("is-dragging", "is-drag-over");
+      });
+      dragKey = null;
+    });
+
+    galleryList.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      const item = e.target.closest(".admin-gallery__item");
+      if (!item) return;
+      const order = getGalleryOrderFromDom();
+      const index = [...galleryList.querySelectorAll(".admin-gallery__item")].indexOf(item);
+      const entry = order[index];
+      if (!entry || galleryEntryKey(entry) === dragKey) return;
+
+      galleryList.querySelectorAll(".is-drag-over").forEach((el) => {
+        if (el !== item) el.classList.remove("is-drag-over");
+      });
+      item.classList.add("is-drag-over");
+    });
+
+    galleryList.addEventListener("drop", (e) => {
+      e.preventDefault();
+      const item = e.target.closest(".admin-gallery__item");
+      if (!item || !dragKey) return;
+      const order = getGalleryOrderFromDom();
+      const index = [...galleryList.querySelectorAll(".admin-gallery__item")].indexOf(item);
+      const entry = order[index];
+      if (!entry) return;
+
+      item.classList.remove("is-drag-over");
+      void reorderGallery(dragKey, galleryEntryKey(entry));
     });
   }
 
@@ -367,10 +753,23 @@
     };
   }
 
-  function fillForm(project) {
+  function applyFormFields(fields) {
+    if (!projectForm || !fields) return;
+    const f = projectForm.elements;
+    f.title.value = fields.title;
+    f.city.value = fields.city;
+    f.year.value = fields.year;
+    f.sort_order.value = fields.sort_order;
+    f.status.value = fields.status;
+    f.typology.value = fields.typology;
+    f.description.value = fields.description;
+  }
+
+  function fillForm(project, opts = {}) {
+    const draft = opts.preserveFormDraft ? readFormFields() : null;
+
     projectForm.hidden = false;
     emptyState.hidden = true;
-    formTitle.textContent = project.title || "Проект";
 
     const f = projectForm.elements;
     f.title.value = project.title;
@@ -380,15 +779,23 @@
     f.status.value = project.status || "";
     f.typology.value = project.typology || "";
     f.description.value = project.description || "";
-    f.published.checked = Boolean(project.published);
-
     if (projectForm.elements.sort_order) {
       projectForm.elements.sort_order.value = project.sort_order;
     }
 
-    coverPreview.src = publicUrl(project.cover_path);
-    renderGallery(project);
+    if (draft) {
+      applyFormFields(draft);
+      formTitle.textContent = draft.title || "Проект";
+    } else {
+      formTitle.textContent = project.title || "Проект";
+    }
 
+    if (project.cover_path && !project.cover_path.startsWith("legacy/")) {
+      setCoverPreviewUrl(publicUrl(project.cover_path));
+    } else {
+      resetCoverPreview();
+    }
+    renderGallery(project);
   }
 
   function selectProject(id) {
@@ -400,7 +807,7 @@
     renderProjectList();
   }
 
-  async function loadProjects() {
+  async function loadProjects(opts = {}) {
     const supabase = client();
     const { data: sessionData } = await supabase.auth.getSession();
     if (!sessionData.session) {
@@ -422,7 +829,7 @@
       projectForm.hidden = true;
       emptyState.hidden = false;
     } else if (currentId) {
-      fillForm(getCurrentProject());
+      fillForm(getCurrentProject(), { preserveFormDraft: Boolean(opts.preserveFormDraft) });
     }
   }
 
@@ -436,7 +843,7 @@
       status: String(fd.get("status") || "").trim() || "Концепция",
       typology: String(fd.get("typology") || "").trim() || "Общественное здание",
       description: String(fd.get("description") || "").trim(),
-      published: fd.get("published") === "on",
+      published: Boolean(getCurrentProject()?.published),
     };
   }
 
@@ -457,12 +864,7 @@
     setBusy(true);
     try {
       const supabase = client();
-      let coverPath = project.cover_path;
-
-      if (pendingCoverFile) {
-        coverPath = coverStoragePath(currentId, pendingCoverFile.name);
-        await uploadStorage(coverPath, pendingCoverFile);
-      }
+      const coverPath = project.cover_path;
 
       const { data: savedRow, error: updateError } = await supabase
         .from("projects")
@@ -487,27 +889,18 @@
         throw new Error("Supabase не обновил запись. Проверьте RLS и policies-admin.sql");
       }
 
-      if (pendingGalleryFiles.length) {
-        let nextOrder =
-          project.project_images.length > 0
-            ? Math.max(...project.project_images.map((i) => i.sort_order)) + 1
-            : 0;
+      const galleryOrder = getGalleryOrderFromDom();
+      if (galleryOrder.some((e) => e.type === "saved")) {
+        applyGalleryOrder(galleryOrder);
+        const orderedProject = getCurrentProject();
 
-        for (const file of pendingGalleryFiles) {
-          const path = galleryStoragePath(currentId, file.name, nextOrder);
-          await uploadStorage(path, file);
-          const { data: imgRow, error: imgError } = await supabase
-            .from("project_images")
-            .insert({
-              project_id: currentId,
-              storage_path: path,
-              sort_order: nextOrder,
-            })
-            .select("id")
-            .single();
-          if (imgError) throw imgError;
-          if (!imgRow?.id) throw new Error("Фото не добавилось в project_images");
-          nextOrder += 1;
+        if (orderedProject?.project_images.length) {
+          const sortUpdates = orderedProject.project_images.map((img) =>
+            supabase.from("project_images").update({ sort_order: img.sort_order }).eq("id", img.id),
+          );
+          const sortResults = await Promise.all(sortUpdates);
+          const sortFailed = sortResults.find((r) => r.error);
+          if (sortFailed?.error) throw sortFailed.error;
         }
       }
 
@@ -520,6 +913,7 @@
       await loadProjects();
       selectProject(currentId);
       notifyMainSiteRefresh();
+      setMediaStatus("cover", "");
 
       showToast(
         fields.published
@@ -544,8 +938,7 @@
       const { error } = await supabase.from("project_images").delete().eq("id", imageId);
       if (error) throw error;
       await removeStorage([storagePath]);
-      await loadProjects();
-      selectProject(currentId);
+      await loadProjects({ preserveFormDraft: true });
       showToast("Фото удалено");
     } catch (err) {
       showToast(err.message || "Не удалось удалить", true);
@@ -585,7 +978,9 @@
 
       await loadProjects();
       selectProject(data.id);
-      showToast("Создан новый проект — заполните поля и загрузите фото");
+      resetCoverPreview();
+      setMediaStatus("cover", "Выберите обложку — загрузится сразу");
+      showToast("Создан новый проект — загрузите фото");
     } catch (err) {
       showToast(err.message || "Не удалось создать проект", true);
     } finally {
@@ -738,7 +1133,9 @@
   });
 
   document.getElementById("btnNewProject").addEventListener("click", createProject);
-  document.getElementById("btnSave").addEventListener("click", () => saveProject());
+  document.querySelectorAll("#btnSave, #btnSaveTop").forEach((btn) => {
+    btn.addEventListener("click", () => saveProject());
+  });
   document.getElementById("btnDelete").addEventListener("click", deleteProject);
   document.getElementById("btnPublishSite")?.addEventListener("click", () => {
     window.AdminPublish?.publishSite(showToast, setBusy);
@@ -747,17 +1144,23 @@
   coverInput.addEventListener("change", () => {
     const file = coverInput.files?.[0];
     if (!file) return;
-    pendingCoverFile = file;
-    coverPreview.src = URL.createObjectURL(file);
+    if (!currentId) {
+      showToast("Сначала выберите или создайте проект", true);
+      coverInput.value = "";
+      return;
+    }
+    void uploadCoverNow(file);
   });
 
   galleryInput.addEventListener("change", () => {
     const files = [...(galleryInput.files || [])];
     if (!files.length) return;
-    pendingGalleryFiles.push(...files);
     galleryInput.value = "";
-    const project = getCurrentProject();
-    if (project) renderGallery(project);
+    if (!currentId) {
+      showToast("Сначала выберите или создайте проект", true);
+      return;
+    }
+    void uploadGalleryFilesNow(files);
   });
 
   client()?.auth.onAuthStateChange((event) => {
@@ -766,6 +1169,7 @@
   });
 
   setupProjectListDnD();
+  setupGalleryDnD();
 
   if (!window.SupabasePortfolio?.isConfigured()) {
     loginError.textContent = "Заполните js/supabase-config.js";

@@ -34,7 +34,6 @@
         <span class="admin-top__badge">админка</span>
       </div>
       <div class="admin-top__actions">
-        <button type="button" id="btnNewProject" class="admin-btn">+ Новый проект</button>
         <button type="button" id="btnPublishSite" class="admin-btn admin-btn--primary">Опубликовать сайт</button>
         <a href="../index.html" class="admin-btn admin-btn--ghost" target="_blank" rel="noopener">Открыть сайт</a>
         <button type="button" id="btnLogout" class="admin-btn admin-btn--ghost">Выйти</button>
@@ -43,7 +42,7 @@
 
     <div class="admin-layout">
       <aside class="admin-sidebar">
-        <p class="admin-sidebar__label">Проекты · перетащите для порядка</p>
+        <button type="button" id="btnNewProject" class="admin-btn admin-btn--new-project">+ Новый проект</button>
         <div class="admin-sidebar__scroll">
           <ul id="projectList" class="admin-project-list" aria-label="Список проектов, перетаскивание меняет порядок на сайте"></ul>
         </div>
@@ -55,11 +54,7 @@
         <form id="projectForm" class="admin-form" hidden>
           <div class="admin-form__head">
             <h2 id="formTitle" class="admin-form__title">Проект</h2>
-            <label class="admin-toggle admin-form__publish-toggle">
-              <input type="checkbox" name="published" class="admin-toggle__input" />
-              <span class="admin-toggle__track" aria-hidden="true"></span>
-              <span class="admin-toggle__label">На сайте</span>
-            </label>
+            <button type="button" id="btnSaveTop" class="admin-btn admin-btn--primary">Сохранить</button>
           </div>
 
           <div class="admin-grid">
@@ -92,8 +87,11 @@
 
           <section class="admin-media">
             <h3>Обложка карточки</h3>
+            <p id="coverMediaStatus" class="admin-media__status" hidden></p>
             <div class="admin-media__row">
-              <div class="admin-preview">
+              <div id="coverPreviewWrap" class="admin-preview is-empty">
+                <span class="admin-preview__placeholder">Нет обложки</span>
+                <span class="admin-preview__loader" aria-hidden="true"></span>
                 <img id="coverPreview" alt="" />
               </div>
               <label class="admin-upload">
@@ -105,6 +103,7 @@
 
           <section class="admin-media">
             <h3>Галерея в попапе</h3>
+            <p id="galleryMediaStatus" class="admin-media__status" hidden></p>
             <input
               type="file"
               id="galleryInput"

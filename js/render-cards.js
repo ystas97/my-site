@@ -52,8 +52,14 @@
     const columns = gridColumns();
     const spacers = spacerCount(window.PROJECTS.length, columns);
 
+    const totalCells = window.PROJECTS.length + spacers;
+    const rows = Math.ceil(totalCells / columns);
+
     grid.innerHTML =
       window.PROJECTS.map((p, index) => renderCard(p, index)).join("") + renderSpacers(spacers);
+
+    /* Safari: без явного числа рядов иногда рисуется лишняя полоса фона сетки */
+    grid.style.gridTemplateRows = rows > 0 ? `repeat(${rows}, auto)` : "";
   }
 
   let resizeTimer;
@@ -62,6 +68,5 @@
     resizeTimer = setTimeout(renderCards, 150);
   });
 
-  /* Всегда ждём load-projects.js — иначе показывается устаревший projects.js */
   window.addEventListener("projectsready", renderCards);
 })();
