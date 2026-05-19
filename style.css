@@ -292,16 +292,16 @@ body.popup-open {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(20px, 8vw, 120px);
+  gap: 60px;
   min-height: 0;
   padding: clamp(20px, 5vh, 56px) clamp(12px, 3vw, 40px) clamp(12px, 2vh, 24px);
 }
 
+/* Окно галереи по макету: 852×476 */
 .project-popup__image-wrap {
-  flex: 0 1 auto;
-  width: min(852px, 72vw);
-  max-height: min(476px, 50vh);
-  aspect-ratio: 852 / 476;
+  flex-shrink: 0;
+  width: 852px;
+  height: 476px;
   border-radius: 20px;
   overflow: hidden;
   background: #f5f5f5;
@@ -398,7 +398,13 @@ body.popup-open {
   }
 
   .project-popup__gallery {
-    gap: 12px;
+    gap: 24px;
+  }
+
+  .project-popup__image-wrap {
+    width: min(852px, calc(100vw - 120px));
+    height: auto;
+    aspect-ratio: 852 / 476;
   }
 
   .project-popup__footer {
