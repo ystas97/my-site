@@ -450,7 +450,7 @@ img {
 .card__year {
   font-family: "Montserrat", sans-serif;
   font-weight: 400;
-  font-size: 1.944cqw;
+  font-size: 2.944cqw;
   line-height: normal;
   text-transform: uppercase;
   color: var(--text-muted);
@@ -898,9 +898,12 @@ body.popup-open .page {
     font-size: 9px;
   }
 
-  .card__year,
   .card__city {
     font-size: 7px;
+  }
+
+  .card__year {
+    font-size: 8px;
   }
 
   .project-popup__gallery {
@@ -938,8 +941,11 @@ body.popup-open .page {
     font-size: 10px;
   }
 
-  .card__year,
   .card__city {
     font-size: 7px;
+  }
+
+  .card__year {
+    font-size: 8px;
   }
 }
