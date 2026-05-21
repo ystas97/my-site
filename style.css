@@ -854,17 +854,24 @@ body.popup-open .page {
     display: none;
   }
 
+  .card {
+    --card-media-size: 72%;
+  }
+
   .card__inner {
     height: 100%;
     min-height: 0;
+    padding: 14% 10% 8%;
   }
 
-  /* Квадрат по ширине блока (aspect-ratio), не height:% — padding карточки ломает квадрат */
+  /* Квадрат через padding (flex + aspect-ratio в Safari ломается) */
   .card__media {
     position: relative;
-    width: 55.556%;
-    aspect-ratio: 1 / 1;
+    width: var(--card-media-size);
+    height: 0;
+    padding-bottom: var(--card-media-size);
     flex: 0 0 auto;
+    align-self: center;
     border-radius: 10px;
     overflow: hidden;
   }
@@ -879,8 +886,8 @@ body.popup-open .page {
   }
 
   .card__text {
-    width: 55.556%;
-    margin-top: 4.167%;
+    width: var(--card-media-size);
+    margin-top: 3%;
   }
 
   .card__row {
@@ -917,6 +924,14 @@ body.popup-open .page {
     flex: 0 0 100%;
     width: 100%;
     max-width: 100%;
+  }
+
+  .card {
+    --card-media-size: 82%;
+  }
+
+  .card__inner {
+    padding: 12% 8% 6%;
   }
 
   .card__title {
