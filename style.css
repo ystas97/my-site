@@ -109,6 +109,7 @@ img {
   right: 0;
   max-height: 0;
   overflow: hidden;
+  pointer-events: none;
   background: #fff;
   border-bottom: none;
   box-shadow: none;
@@ -150,6 +151,11 @@ img {
 .header.is-about-open .header__about::after {
   opacity: 1;
   transition: opacity 0s linear 0s;
+}
+
+.header__about-inner,
+.header__contacts-inner {
+  pointer-events: auto;
 }
 
 .header__contacts-inner {
@@ -822,8 +828,14 @@ body.popup-open .page {
     gap: 24px;
   }
 
-  /* Плашка не выше экрана — прокрутка внутри «О бюро» */
-  .header.is-about-open .header__about {
+  /* Плашка не выше экрана; скролл и клики только на контенте (плашка не перехватывает сетку) */
+  .header.is-about-open .header__about,
+  .header.is-contacts-open .header__contacts {
+    max-height: calc(100dvh - var(--header-offset, 72px));
+    overflow: hidden;
+  }
+
+  .header.is-about-open .header__about-inner {
     max-height: calc(100dvh - var(--header-offset, 72px));
     overflow-x: hidden;
     overflow-y: auto;
@@ -831,7 +843,7 @@ body.popup-open .page {
     overscroll-behavior: contain;
   }
 
-  .header.is-contacts-open .header__contacts {
+  .header.is-contacts-open .header__contacts-inner {
     max-height: calc(100dvh - var(--header-offset, 72px));
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
