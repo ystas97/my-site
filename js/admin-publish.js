@@ -16,7 +16,32 @@
     return btoa(binary);
   }
 
+  function getCnameContent() {
+    const host = window.location.hostname;
+    if (
+      host &&
+      host !== "localhost" &&
+      host !== "127.0.0.1" &&
+      !host.endsWith(".github.io")
+    ) {
+      return `${host}\n`;
+    }
+    return "antonovka.studio\n";
+  }
+
+  function buildCnameFile() {
+    return {
+      path: "CNAME",
+      content: getCnameContent(),
+      encoding: "utf-8",
+    };
+  }
+
   async function fetchDeployFile(path) {
+    if (path === "CNAME") {
+      return buildCnameFile();
+    }
+
     const normalized = path.replace(/^\//, "");
     const url = new URL(`../${normalized}`, window.location.href);
     const res = await fetch(url, { cache: "no-store" });
