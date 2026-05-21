@@ -1,4 +1,5 @@
-const PROJECTS = [
+/** Резервные данные, если Supabase недоступен (сайт читает через load-projects.js) */
+window.PROJECTS_LOCAL = [
   {
     title: "детская художественная школа",
     city: "альметьевск",
@@ -113,7 +114,7 @@ const PROJECTS = [
   },
 ];
 
-PROJECTS.forEach((project) => {
+window.PROJECTS_LOCAL.forEach((project) => {
   if (!project.status) project.status = "Концепция";
   if (!project.typology) project.typology = "Общественное здание";
   if (project.description) return;

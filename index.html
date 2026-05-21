@@ -6,23 +6,115 @@
   <title>antonovka.studio — архитектурное бюро</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400&family=Raleway:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Raleway:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css?v=grid-fix-10" />
 </head>
 <body>
   <div class="page">
     <header class="header">
-      <a class="header__logo" href="/" aria-label="antonovka.studio">
-        <img src="assets/images/logo.svg" alt="antonovka.studio" width="197" height="24" />
-      </a>
-      <nav class="header__nav" aria-label="Основная навигация">
-        <a href="#services">услуги</a>
-        <a href="#about">о бюро</a>
-        <a href="#contacts">контакты</a>
-      </nav>
-      <a class="header__telegram" href="https://t.me/" target="_blank" rel="noopener noreferrer" aria-label="Telegram">
-        <img src="assets/images/telegram.png" alt="" width="26" height="26" />
-      </a>
+      <div class="header__inner">
+        <a class="header__logo" href="/" aria-label="antonovka.studio">
+          <img src="assets/images/logo.svg" alt="antonovka.studio" width="197" height="24" />
+        </a>
+        <nav class="header__nav" aria-label="Основная навигация">
+          <a
+            href="#about"
+            class="header__nav-about"
+            aria-expanded="false"
+            aria-controls="headerAbout"
+          >о бюро</a>
+          <a
+            href="#contacts"
+            class="header__nav-contacts"
+            aria-expanded="false"
+            aria-controls="headerContacts"
+          >контакты</a>
+        </nav>
+        <a class="header__telegram" href="https://t.me/" target="_blank" rel="noopener noreferrer" aria-label="Telegram">
+          <img src="assets/images/telegram.png" alt="" width="26" height="26" />
+        </a>
+      </div>
+
+      <div id="headerAbout" class="header__about header__panel" aria-hidden="true">
+        <div class="header__about-inner">
+          <div class="header__about-text">
+            <section class="header__about-block">
+              <h2>О бюро</h2>
+              <p>
+                Мы назвали архитектурное бюро «Антоновка», потому что хотели живого, близкого и понятного каждому
+                имени. Оно напоминает о ярком вкусе, семейном уюте и тёплых воспоминаниях детства. Хотя мы — семейное
+                бюро и не используем фамилию, «Антоновка» созвучна имени основателя и отражает наш характер —
+                одновременно гармоничный и смелый.
+              </p>
+            </section>
+            <section class="header__about-block">
+              <h2>Кто мы?</h2>
+              <p class="header__about-lead">Светлана и Антон Севастьяновы</p>
+              <p>
+                За «Антоновкой» стоят супруги Светлана и Антон Севастьяновы — архитекторы с опытом более 10 лет каждый.
+                Светлана работала в крупных бюро над жилыми и коммерческими проектами, Антон был главным архитектором
+                города. Вместе они создали десятки общественных, жилых и коммерческих объектов.
+              </p>
+            </section>
+            <section class="header__about-block">
+              <h2>Миссия</h2>
+              <p>
+                «Антоновка» — это архитектурное бюро полного цикла, специализирующееся на социально-ориентированных
+                проектах. В центре каждого решения — человек, его эмоции и опыт взаимодействия с городской средой.
+              </p>
+              <p>
+                Наша цель — сделать город по-настоящему жизнерадостным и любимым. Это наш вклад в общую копилку
+                городской индивидуальности, красоты и атмосферы коллективного благополучия.
+              </p>
+              <p>
+                Мы умеем создавать глубокие и эффектные объекты даже при ограниченных ресурсах и сжатых сроках, находя
+                общий язык со всеми участниками процесса. Каждый наш проект это рождение новых ярких историй и счастливых
+                моментов.
+              </p>
+            </section>
+          </div>
+          <div class="header__about-person">
+            <img
+              src="assets/images/anton-sevastyanov.png"
+              alt="Антон Севастьянов"
+              width="300"
+              height="300"
+              loading="lazy"
+            />
+            <h3>Антон Севастьянов</h3>
+            <ul>
+              <li>выпускник в 2011 Казанского Государственного Архитектурно-строительного Университета</li>
+              <li>с 2013 по 2016 работал главным архитектором проекта в проектном институте Моспромпроект</li>
+              <li>с 2016 по 2019 работал в команде бюро Wowhaus</li>
+              <li>с 2019-2024 главный архитектор города Альметьевск в Республике Татарстан</li>
+            </ul>
+          </div>
+          <div class="header__about-person">
+            <img
+              src="assets/images/svetlana-sevastyanova.png"
+              alt="Светлана Севастьянова"
+              width="300"
+              height="300"
+              loading="lazy"
+            />
+            <h3>Светлана Севастьянова</h3>
+            <ul>
+              <li>выпускница Казанского Государственного Архитектурно-строительного Университета в 2012</li>
+              <li>с 2013 по 2014 работала ведущим архитектором проекта в проектном институте Моспромпроект</li>
+              <li>с 2014 по 2019 работала ведущим архитектором бюро Speech</li>
+              <li>с 2019-2024 главный архитектор города Альметьевск в Республике Татарстан</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div id="headerContacts" class="header__contacts header__panel" aria-hidden="true">
+        <div class="header__contacts-inner">
+          <p><a href="tel:+74992815540">+7 (499) 281-55-40</a></p>
+          <p><a href="mailto:info@antonovka.studio">info@antonovka.studio</a></p>
+          <p>Москва, Малый Рогожский пер, 11</p>
+        </div>
+      </div>
     </header>
 
     <main class="grid" id="projects" aria-label="Портфолио"></main>
@@ -47,46 +139,58 @@
       </div>
 
       <footer class="project-popup__footer">
-        <div class="project-popup__sheet">
-          <div id="projectDetails" class="project-popup__details" aria-hidden="true">
-            <dl class="project-popup__facts">
-              <dt>Статус</dt>
-              <dd class="project-popup__status"></dd>
-              <dt>Типология</dt>
-              <dd class="project-popup__typology"></dd>
-              <dt>Описание</dt>
-              <dd class="project-popup__description-text"></dd>
-            </dl>
-          </div>
+        <div class="project-popup__footer-lift">
+          <div class="project-popup__footer-clip">
+            <div class="project-popup__sheet">
+              <div class="project-popup__footer-bar">
+                <button
+                  type="button"
+                  class="project-popup__expand"
+                  aria-label="Показать описание проекта"
+                  aria-expanded="false"
+                  aria-controls="projectDetails"
+                >
+                  <img class="project-popup__expand-icon project-popup__expand-icon--up" src="assets/icons/arrow-left.svg" alt="" width="7" height="12" />
+                  <img class="project-popup__expand-icon project-popup__expand-icon--down" src="assets/icons/arrow-left.svg" alt="" width="7" height="12" hidden />
+                </button>
+                <div class="project-popup__footer-row">
+                  <p class="project-popup__meta" id="projectPopupTitle">
+                    <span class="project-popup__title"></span>
+                    <span class="project-popup__sep"> · </span>
+                    <span class="project-popup__city"></span>
+                  </p>
+                  <span class="project-popup__year"></span>
+                </div>
+              </div>
 
-          <div class="project-popup__footer-bar">
-            <button
-              type="button"
-              class="project-popup__expand"
-              aria-label="Показать описание проекта"
-              aria-expanded="false"
-              aria-controls="projectDetails"
-            >
-              <img class="project-popup__chevron project-popup__chevron--up" src="assets/icons/chevron-up.svg" alt="" width="10" height="6" />
-              <img class="project-popup__chevron project-popup__chevron--down" src="assets/icons/chevron-down.svg" alt="" width="10" height="6" hidden />
-            </button>
-            <div class="project-popup__footer-row">
-              <p class="project-popup__meta" id="projectPopupTitle">
-                <span class="project-popup__title"></span>
-                <span class="project-popup__sep"> · </span>
-                <span class="project-popup__city"></span>
-              </p>
-              <span class="project-popup__year"></span>
+              <div id="projectDetails" class="project-popup__details" aria-hidden="true">
+                <dl class="project-popup__facts">
+                  <dt>Статус</dt>
+                  <dd class="project-popup__status"></dd>
+                  <dt>Типология</dt>
+                  <dd class="project-popup__typology"></dd>
+                  <dt>Описание</dt>
+                  <dd class="project-popup__description-text"></dd>
+                </dl>
+              </div>
+
             </div>
           </div>
         </div>
+        <div class="project-popup__footer-shadow" aria-hidden="true"></div>
       </footer>
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
+  <script src="js/supabase-client.js"></script>
   <script src="js/projects.js"></script>
+  <script src="js/load-projects.js"></script>
+  <script src="js/header-panels.js"></script>
   <script src="js/render-cards.js"></script>
   <script src="js/cards-hover.js"></script>
   <script src="js/project-popup.js"></script>
+  <script src="js/custom-cursor.js"></script>
 </body>
 </html>

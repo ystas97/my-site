@@ -8,7 +8,17 @@
 
 ## Стек
 
-HTML + CSS, шрифты Google Fonts (Raleway, Montserrat).
+HTML + CSS, шрифты Google Fonts (Raleway, Montserrat), **Supabase** (проекты и фото).
+
+### Supabase
+
+Инструкция: [supabase/README.md](supabase/README.md)  
+Админка: [admin.html](admin.html) — настройка входа: [supabase/ADMIN.md](supabase/ADMIN.md)
+
+```bash
+cp js/supabase-config.example.js js/supabase-config.js
+# вставьте URL и anon key
+```
 
 ## Локальный просмотр
 
