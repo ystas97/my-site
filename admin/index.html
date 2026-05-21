@@ -34,6 +34,10 @@
       <div class="admin-top__left">
         <a class="admin-top__brand" href="../index.html">antonovka.studio</a>
         <span class="admin-top__badge">админка</span>
+        <nav class="admin-module-nav" aria-label="Разделы админки">
+          <button type="button" class="admin-module-nav__btn is-active" data-admin-module="projects">Проекты</button>
+          <button type="button" class="admin-module-nav__btn" data-admin-module="pages">О бюро</button>
+        </nav>
       </div>
       <div class="admin-top__actions">
         <button type="button" id="btnPublishSite" class="admin-btn admin-btn--primary">Опубликовать сайт</button>
@@ -43,17 +47,18 @@
     </header>
 
     <div class="admin-layout">
-      <aside class="admin-sidebar">
-        <button type="button" id="btnNewProject" class="admin-btn admin-btn--new-project">+ Новый проект</button>
-        <div class="admin-sidebar__scroll">
-          <ul id="projectList" class="admin-project-list" aria-label="Список проектов, перетаскивание меняет порядок на сайте"></ul>
-        </div>
-      </aside>
+      <div id="moduleProjects" class="admin-module">
+        <aside class="admin-sidebar">
+          <button type="button" id="btnNewProject" class="admin-btn admin-btn--new-project">+ Новый проект</button>
+          <div class="admin-sidebar__scroll">
+            <ul id="projectList" class="admin-project-list" aria-label="Список проектов, перетаскивание меняет порядок на сайте"></ul>
+          </div>
+        </aside>
 
-      <main class="admin-main">
-        <p id="emptyState" class="admin-empty">Выберите проект слева или создайте новый.</p>
+        <main class="admin-main">
+          <p id="emptyState" class="admin-empty">Выберите проект слева или создайте новый.</p>
 
-        <form id="projectForm" class="admin-form" hidden>
+          <form id="projectForm" class="admin-form" hidden>
           <div class="admin-form__head">
             <h2 id="formTitle" class="admin-form__title">Проект</h2>
             <button type="button" id="btnSaveTop" class="admin-btn admin-btn--primary">Сохранить</button>
@@ -124,8 +129,148 @@
               </div>
             </div>
           </footer>
-        </form>
-      </main>
+          </form>
+        </main>
+      </div>
+
+      <div id="modulePages" class="admin-module" hidden>
+        <aside class="admin-sidebar">
+          <p class="admin-sidebar__label">Разделы сайта</p>
+          <ul id="pageList" class="admin-page-list" aria-label="О бюро и контакты">
+            <li>
+              <button type="button" class="admin-page-list__btn is-active" data-page-slug="about">О бюро</button>
+            </li>
+            <li>
+              <button type="button" class="admin-page-list__btn" data-page-slug="contacts">Контакты</button>
+            </li>
+          </ul>
+        </aside>
+
+        <main class="admin-main">
+          <p id="pagesEmpty" class="admin-empty" hidden>Выберите раздел слева.</p>
+
+          <form id="aboutPageForm" class="admin-form">
+            <div class="admin-form__head">
+              <h2 class="admin-form__title">О бюро</h2>
+              <button type="button" id="btnSaveAboutTop" class="admin-btn admin-btn--primary">Сохранить</button>
+            </div>
+
+            <section class="admin-section">
+              <h3 class="admin-section__title">О бюро</h3>
+              <label class="admin-field admin-field--full">
+                <span>Текст</span>
+                <textarea name="aboutIntro" rows="5" required></textarea>
+              </label>
+            </section>
+
+            <section class="admin-section">
+              <h3 class="admin-section__title">Кто мы?</h3>
+              <label class="admin-field admin-field--full">
+                <span>Подзаголовок</span>
+                <input type="text" name="aboutWhoLead" />
+              </label>
+              <label class="admin-field admin-field--full">
+                <span>Текст</span>
+                <textarea name="aboutWhoText" rows="4"></textarea>
+              </label>
+            </section>
+
+            <section class="admin-section">
+              <h3 class="admin-section__title">Миссия</h3>
+              <label class="admin-field admin-field--full">
+                <span>Абзацы (пустая строка между абзацами)</span>
+                <textarea name="aboutMission" rows="6"></textarea>
+              </label>
+            </section>
+
+            <section class="admin-section">
+              <h3 class="admin-section__title">Антон Севастьянов</h3>
+              <div class="admin-grid">
+                <label class="admin-field admin-field--full">
+                  <span>Имя</span>
+                  <input type="text" name="person1Name" />
+                </label>
+              </div>
+              <div class="admin-media__row">
+                <div id="person1PreviewWrap" class="admin-preview is-empty">
+                  <span class="admin-preview__placeholder">Фото</span>
+                  <img id="person1Preview" alt="" />
+                </div>
+                <label class="admin-upload">
+                  <span>Загрузить фото</span>
+                  <input type="file" id="person1Upload" accept="image/jpeg,image/png,image/webp,image/gif" />
+                </label>
+              </div>
+              <label class="admin-field admin-field--full">
+                <span>Путь к фото (или после загрузки)</span>
+                <input type="text" name="person1Image" />
+              </label>
+              <label class="admin-field admin-field--full">
+                <span>Биография (каждый пункт с новой строки)</span>
+                <textarea name="person1Bullets" rows="5"></textarea>
+              </label>
+            </section>
+
+            <section class="admin-section">
+              <h3 class="admin-section__title">Светлана Севастьянова</h3>
+              <div class="admin-grid">
+                <label class="admin-field admin-field--full">
+                  <span>Имя</span>
+                  <input type="text" name="person2Name" />
+                </label>
+              </div>
+              <div class="admin-media__row">
+                <div id="person2PreviewWrap" class="admin-preview is-empty">
+                  <span class="admin-preview__placeholder">Фото</span>
+                  <img id="person2Preview" alt="" />
+                </div>
+                <label class="admin-upload">
+                  <span>Загрузить фото</span>
+                  <input type="file" id="person2Upload" accept="image/jpeg,image/png,image/webp,image/gif" />
+                </label>
+              </div>
+              <label class="admin-field admin-field--full">
+                <span>Путь к фото (или после загрузки)</span>
+                <input type="text" name="person2Image" />
+              </label>
+              <label class="admin-field admin-field--full">
+                <span>Биография (каждый пункт с новой строки)</span>
+                <textarea name="person2Bullets" rows="5"></textarea>
+              </label>
+            </section>
+
+            <footer class="admin-form__footer">
+              <button type="button" id="btnSaveAbout" class="admin-btn admin-btn--primary">Сохранить</button>
+            </footer>
+          </form>
+
+          <form id="contactsPageForm" class="admin-form" hidden>
+            <div class="admin-form__head">
+              <h2 class="admin-form__title">Контакты</h2>
+              <button type="button" id="btnSaveContactsTop" class="admin-btn admin-btn--primary">Сохранить</button>
+            </div>
+
+            <div class="admin-grid">
+              <label class="admin-field admin-field--full">
+                <span>Телефон</span>
+                <input type="text" name="phone" required />
+              </label>
+              <label class="admin-field admin-field--full">
+                <span>Email</span>
+                <input type="email" name="email" required />
+              </label>
+              <label class="admin-field admin-field--full">
+                <span>Адрес</span>
+                <input type="text" name="address" required />
+              </label>
+            </div>
+
+            <footer class="admin-form__footer">
+              <button type="button" id="btnSaveContacts" class="admin-btn admin-btn--primary">Сохранить</button>
+            </footer>
+          </form>
+        </main>
+      </div>
     </div>
   </div>
 
@@ -135,6 +280,8 @@
   <script src="../js/supabase-config.js"></script>
   <script src="../js/supabase-client.js"></script>
   <script src="../js/admin-publish.js"></script>
+  <script src="../js/site-content.js"></script>
+  <script src="../js/admin-pages.js"></script>
   <script src="../js/admin.js"></script>
 </body>
 </html>

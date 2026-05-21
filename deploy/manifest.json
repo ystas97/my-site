@@ -8,6 +8,8 @@
     "admin/index.html",
     "admin.css",
     "js/admin.js",
+    "js/admin-pages.js",
+    "js/site-content.js",
     "js/admin-publish.js",
     "js/cards-hover.js",
     "js/custom-cursor.js",

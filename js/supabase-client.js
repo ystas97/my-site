@@ -68,6 +68,29 @@
     };
   }
 
+  async function fetchSiteSections() {
+    const client = getClient();
+    if (!client) throw new Error("Supabase не настроен (js/supabase-config.js)");
+
+    const { data, error } = await client.from("site_sections").select("slug, content, updated_at");
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function upsertSiteSection(slug, content) {
+    const client = getClient();
+    if (!client) throw new Error("Supabase не настроен (js/supabase-config.js)");
+
+    const { data, error } = await client
+      .from("site_sections")
+      .upsert({ slug, content }, { onConflict: "slug" })
+      .select("slug, content, updated_at")
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
   async function fetchPublishedProjects() {
     const client = getClient();
     if (!client) {
@@ -106,6 +129,8 @@
     isConfigured,
     getClient,
     storagePublicUrl,
+    fetchSiteSections,
+    upsertSiteSection,
     fetchPublishedProjects,
   };
 })();

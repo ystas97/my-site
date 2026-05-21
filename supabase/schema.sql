@@ -147,3 +147,37 @@ create policy "Authenticated delete project images"
   for delete
   to authenticated
   using (bucket_id = 'project-images');
+
+-- ---------------------------------------------------------------------------
+-- Секции сайта: «О бюро», «Контакты»
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.site_sections (
+  slug text primary key check (slug in ('about', 'contacts')),
+  content jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+drop trigger if exists site_sections_set_updated_at on public.site_sections;
+
+create trigger site_sections_set_updated_at
+  before update on public.site_sections
+  for each row
+  execute function public.set_updated_at();
+
+alter table public.site_sections enable row level security;
+
+drop policy if exists "Public read site sections" on public.site_sections;
+create policy "Public read site sections"
+  on public.site_sections
+  for select
+  to anon, authenticated
+  using (true);
+
+drop policy if exists "Authenticated manage site sections" on public.site_sections;
+create policy "Authenticated manage site sections"
+  on public.site_sections
+  for all
+  to authenticated
+  using (true)
+  with check (true);

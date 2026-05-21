@@ -1038,6 +1038,9 @@
 
   async function tryEnterApp(showWelcome) {
     await loadProjects();
+    if (window.AdminPages?.init) {
+      await window.AdminPages.init({ showToast, setBusy });
+    }
     showApp();
     if (showWelcome) showToast("Вы вошли в админку");
   }
