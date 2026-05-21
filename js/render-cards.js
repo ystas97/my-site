@@ -7,6 +7,10 @@
       .replace(/"/g, "&quot;");
   }
 
+  function useFlexLayout() {
+    return window.matchMedia("(max-width: 900px)").matches;
+  }
+
   function gridColumns() {
     if (window.matchMedia("(max-width: 520px)").matches) return 1;
     if (window.matchMedia("(max-width: 900px)").matches) return 2;
@@ -33,6 +37,12 @@
     return Math.floor((width - gap * (columns - 1)) / columns);
   }
 
+  function clearFixedGridLayout(grid) {
+    grid.classList.remove("is-sized");
+    grid.style.removeProperty("--grid-cell");
+    grid.style.gridTemplateRows = "";
+  }
+
   function layoutGrid() {
     const grid = document.getElementById("projects");
     if (!grid || grid.classList.contains("is-loading")) return;
@@ -40,9 +50,13 @@
     const columns = gridColumns();
     const cards = grid.querySelectorAll(".card");
     if (!cards.length) {
-      grid.classList.remove("is-sized");
-      grid.style.removeProperty("--grid-cell");
-      grid.style.gridTemplateRows = "";
+      clearFixedGridLayout(grid);
+      return;
+    }
+
+    /* До 900px — flex в CSS, без px-рядов (Safari ломает grid при скролле) */
+    if (useFlexLayout()) {
+      clearFixedGridLayout(grid);
       return;
     }
 
@@ -57,18 +71,16 @@
 
   let layoutTimer;
   function scheduleLayout() {
+    if (useFlexLayout()) return;
     const run = () => layoutGrid();
     run();
-    requestAnimationFrame(() => {
-      layoutGrid();
-      requestAnimationFrame(layoutGrid);
-    });
+    requestAnimationFrame(layoutGrid);
     clearTimeout(layoutTimer);
-    layoutTimer = setTimeout(run, 80);
-    setTimeout(run, 280);
+    layoutTimer = setTimeout(run, 120);
   }
 
   function bindImageLayout(grid) {
+    if (useFlexLayout()) return;
     grid.querySelectorAll(".card__media img").forEach((img) => {
       if (img.complete) return;
       img.addEventListener("load", scheduleLayout, { once: true });
@@ -76,12 +88,19 @@
     });
   }
 
+  function cardImageAttrs() {
+    if (useFlexLayout()) {
+      return 'loading="eager" decoding="async"';
+    }
+    return 'loading="lazy" decoding="async"';
+  }
+
   function renderCard(project, index) {
     return `
     <article class="card">
       <a class="card__inner" href="#" data-project-index="${index}">
         <div class="card__media">
-          <img src="${escapeHtml(project.image)}" alt="" loading="lazy" />
+          <img src="${escapeHtml(project.image)}" alt="" ${cardImageAttrs()} />
         </div>
         <div class="card__text">
           <div class="card__row">
@@ -103,38 +122,55 @@
     return html;
   }
 
+  let lastColumns = 0;
+  let lastGridWidth = 0;
+
   function renderCards() {
     const grid = document.getElementById("projects");
     if (!grid || !Array.isArray(window.PROJECTS)) return;
 
     const columns = gridColumns();
+    lastColumns = columns;
     const spacers = spacerCount(window.PROJECTS.length, columns);
 
-    grid.classList.remove("is-sized");
+    clearFixedGridLayout(grid);
     grid.innerHTML =
       window.PROJECTS.map((p, index) => renderCard(p, index)).join("") + renderSpacers(spacers);
 
-    bindImageLayout(grid);
-    scheduleLayout();
-  }
-
-  let resizeTimer;
-  window.addEventListener("resize", () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(renderCards, 150);
-  });
-
-  window.addEventListener("projectsready", renderCards);
-  window.addEventListener("load", scheduleLayout);
-
-  if (typeof ResizeObserver !== "undefined") {
-    const grid = document.getElementById("projects");
-    if (grid) {
-      new ResizeObserver(() => scheduleLayout()).observe(grid);
+    lastGridWidth = Math.round(grid.getBoundingClientRect().width);
+    if (!useFlexLayout()) {
+      bindImageLayout(grid);
+      scheduleLayout();
     }
   }
 
-  if (document.fonts?.ready) {
-    document.fonts.ready.then(scheduleLayout).catch(() => {});
+  function onBreakpointChange() {
+    renderCards();
+  }
+
+  window.matchMedia("(max-width: 900px)").addEventListener("change", onBreakpointChange);
+  window.matchMedia("(max-width: 520px)").addEventListener("change", onBreakpointChange);
+
+  window.addEventListener("projectsready", renderCards);
+
+  if (!useFlexLayout()) {
+    window.addEventListener("load", scheduleLayout);
+
+    if (typeof ResizeObserver !== "undefined") {
+      const grid = document.getElementById("projects");
+      if (grid) {
+        new ResizeObserver(() => {
+          if (useFlexLayout()) return;
+          const width = Math.round(grid.getBoundingClientRect().width);
+          if (width === lastGridWidth) return;
+          lastGridWidth = width;
+          scheduleLayout();
+        }).observe(grid);
+      }
+    }
+
+    if (document.fonts?.ready) {
+      document.fonts.ready.then(scheduleLayout).catch(() => {});
+    }
   }
 })();

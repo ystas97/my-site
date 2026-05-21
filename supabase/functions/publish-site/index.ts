@@ -11,6 +11,12 @@ interface DeployFile {
   encoding?: "utf-8" | "base64";
 }
 
+interface PublishBody {
+  source?: "browser" | "repository";
+  files?: DeployFile[];
+  message?: string;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -45,22 +51,34 @@ Deno.serve(async (req) => {
       return json({ error: "Сессия недействительна. Войдите снова." }, 401);
     }
 
-    const allowedEmail = Deno.env.get("ADMIN_EMAIL");
-    if (allowedEmail && user.email !== allowedEmail) {
-      return json({ error: "Нет прав на публикацию сайта" }, 403);
-    }
-
-    const body = (await req.json()) as { files?: DeployFile[]; message?: string };
-    const files = body.files ?? [];
-    if (!files.length) {
-      return json({ error: "Нет файлов для публикации" }, 400);
-    }
-
+    const body = (await req.json()) as PublishBody;
     const commitMessage =
       body.message?.trim() || `Публикация из админки (${user.email ?? "admin"})`;
 
-    const result = await publishToGitHub(files, commitMessage);
-    return json({ ok: true, ...result });
+    const owner = Deno.env.get("GITHUB_OWNER") ?? "ystas97";
+    const repo = Deno.env.get("GITHUB_REPO") ?? "my-site";
+    const branch = Deno.env.get("GITHUB_BRANCH") ?? "main";
+    const token = Deno.env.get("GITHUB_PAT");
+    if (!token) {
+      throw new Error(
+        "Секрет GITHUB_PAT не настроен (Supabase → Edge Functions → Secrets)",
+      );
+    }
+
+    let files: DeployFile[] = [];
+    let source = body.source ?? "browser";
+
+    if (source === "repository") {
+      files = await loadFilesFromRepository(token, owner, repo, branch);
+    } else {
+      files = body.files ?? [];
+      if (!files.length) {
+        return json({ error: "Нет файлов для публикации" }, 400);
+      }
+    }
+
+    const result = await publishToGitHub(token, owner, repo, branch, files, commitMessage);
+    return json({ ok: true, source, fileCount: files.length, ...result });
   } catch (err) {
     console.error(err);
     const message = err instanceof Error ? err.message : "Ошибка публикации";
@@ -96,18 +114,104 @@ async function github(
   });
 }
 
-async function publishToGitHub(files: DeployFile[], message: string) {
-  const token = Deno.env.get("GITHUB_PAT");
-  if (!token) {
-    throw new Error(
-      "Секрет GITHUB_PAT не настроен (Supabase → Edge Functions → Secrets)",
-    );
+function decodeGitHubContent(base64Content: string, asBinary: boolean): string {
+  const raw = base64Content.replace(/\n/g, "");
+  if (asBinary) return raw;
+  const binary = atob(raw);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new TextDecoder().decode(bytes);
+}
+
+async function fetchRepoFile(
+  token: string,
+  owner: string,
+  repo: string,
+  branch: string,
+  path: string,
+): Promise<DeployFile> {
+  const encoded = path.split("/").map(encodeURIComponent).join("/");
+  const res = await github(
+    token,
+    `/repos/${owner}/${repo}/contents/${encoded}?ref=${encodeURIComponent(branch)}`,
+  );
+
+  if (!res.ok) {
+    throw new Error(`Файл ${path} не найден в GitHub (${res.status})`);
   }
 
-  const owner = Deno.env.get("GITHUB_OWNER") ?? "ystas97";
-  const repo = Deno.env.get("GITHUB_REPO") ?? "my-site";
-  const branch = Deno.env.get("GITHUB_BRANCH") ?? "main";
+  const data = await res.json();
+  if (Array.isArray(data) || !data.content) {
+    throw new Error(`Путь ${path} — не файл в репозитории`);
+  }
 
+  const binary = isBinaryPath(path);
+  return {
+    path,
+    content: decodeGitHubContent(data.content as string, binary),
+    encoding: binary ? "base64" : "utf-8",
+  };
+}
+
+async function loadManifestPaths(
+  token: string,
+  owner: string,
+  repo: string,
+  branch: string,
+): Promise<string[]> {
+  const manifestFile = await fetchRepoFile(
+    token,
+    owner,
+    repo,
+    branch,
+    "deploy/manifest.json",
+  );
+  const manifest = JSON.parse(manifestFile.content) as { paths?: string[] };
+  if (!Array.isArray(manifest.paths) || !manifest.paths.length) {
+    throw new Error("deploy/manifest.json в репозитории пуст или неверен");
+  }
+  return manifest.paths;
+}
+
+async function loadFilesFromRepository(
+  token: string,
+  owner: string,
+  repo: string,
+  branch: string,
+): Promise<DeployFile[]> {
+  const paths = await loadManifestPaths(token, owner, repo, branch);
+  const files: DeployFile[] = [];
+
+  for (const path of paths) {
+    files.push(await fetchRepoFile(token, owner, repo, branch, path));
+  }
+
+  const hasConfig = files.some((f) => f.path === "js/supabase-config.js");
+  if (!hasConfig) {
+    try {
+      files.push(
+        await fetchRepoFile(token, owner, repo, branch, "js/supabase-config.js"),
+      );
+    } catch {
+      throw new Error(
+        "В репозитории нет js/supabase-config.js. Сделайте git push с этим файлом или публикуйте с localhost.",
+      );
+    }
+  }
+
+  return files;
+}
+
+async function publishToGitHub(
+  token: string,
+  owner: string,
+  repo: string,
+  branch: string,
+  files: DeployFile[],
+  message: string,
+) {
   const refRes = await github(
     token,
     `/repos/${owner}/${repo}/git/ref/heads/${branch}`,
@@ -189,6 +293,6 @@ async function publishToGitHub(files: DeployFile[], message: string) {
   return {
     commit: newCommit.sha as string,
     commitUrl: `https://github.com/${owner}/${repo}/commit/${newCommit.sha}`,
-    siteUrl: Deno.env.get("SITE_URL") ?? "https://ystas97.github.io/my-site/",
+    siteUrl: Deno.env.get("SITE_URL") ?? "https://antonovka.studio/",
   };
 }

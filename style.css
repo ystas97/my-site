@@ -275,8 +275,10 @@ img {
 }
 
 .header__logo img {
+  display: block;
   height: clamp(20px, 1.667vw, 36px);
   width: auto;
+  object-fit: contain;
 }
 
 .header__nav {
@@ -820,8 +822,65 @@ body.popup-open .page {
     gap: 24px;
   }
 
+  /* Flex вместо grid — без «лесенки» и мерцания в Safari при скролле */
   .grid {
-    grid-template-columns: repeat(2, 1fr);
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    grid-template-columns: unset;
+    grid-template-rows: unset !important;
+  }
+
+  .grid .card,
+  .grid .card--spacer {
+    box-sizing: border-box;
+    flex: 0 0 calc((100% - 1px) / 2);
+    width: calc((100% - 1px) / 2);
+    max-width: calc((100% - 1px) / 2);
+    aspect-ratio: 1 / 1;
+    height: auto;
+    max-height: none;
+    align-self: auto;
+    container-type: normal;
+    transition: none;
+    transform: none;
+    -webkit-transform: none;
+    -webkit-backface-visibility: visible;
+    backface-visibility: visible;
+    overflow: hidden;
+  }
+
+  .grid .card--spacer::before {
+    display: none;
+  }
+
+  .card__media {
+    width: 55.556%;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    border-radius: 2.778%;
+  }
+
+  .card__text {
+    width: 55.556%;
+    margin-top: 4.167%;
+  }
+
+  .card__row {
+    gap: 2.222%;
+  }
+
+  .card__media {
+    border-radius: 10px;
+  }
+
+  .card__title {
+    font-size: 9px;
+  }
+
+  .card__year,
+  .card__city {
+    font-size: 7px;
   }
 
   .project-popup__gallery {
@@ -840,7 +899,19 @@ body.popup-open .page {
 }
 
 @media (max-width: 520px) {
-  .grid {
-    grid-template-columns: 1fr;
+  .grid .card,
+  .grid .card--spacer {
+    flex: 0 0 100%;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .card__title {
+    font-size: 10px;
+  }
+
+  .card__year,
+  .card__city {
+    font-size: 7px;
   }
 }

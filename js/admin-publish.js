@@ -44,6 +44,7 @@
 
     const normalized = path.replace(/^\//, "");
     const url = new URL(`../${normalized}`, window.location.href);
+    url.searchParams.set("t", String(Date.now()));
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) {
       return null;
@@ -106,6 +107,11 @@
     return files;
   }
 
+  function isLocalDeployOrigin() {
+    const host = window.location.hostname;
+    return host === "localhost" || host === "127.0.0.1" || host === "[::1]";
+  }
+
   async function publishSite(showToast, setBusy) {
     const supabase = client();
     if (!supabase) {
@@ -119,10 +125,22 @@
       return;
     }
 
-    if (
+    const fromLocal = isLocalDeployOrigin();
+
+    if (fromLocal) {
+      if (
+        !confirm(
+          "Опубликовать сайт на GitHub Pages?\n\n" +
+            "Будут отправлены файлы с вашего компьютера (с локального сервера).",
+        )
+      ) {
+        return;
+      }
+    } else if (
       !confirm(
-        "Опубликовать текущую версию сайта на GitHub Pages?\n\n" +
-          "Будут отправлены файлы с этого сервера (локально или с уже открытого сайта).",
+        "Опубликовать сайт из последнего git push?\n\n" +
+          "Будут взяты файлы из репозитория GitHub (ветка main), не с диска.\n" +
+          "Несохранённые на компьютере правки не попадут — сначала git push или откройте админку на http://127.0.0.1:8080/admin/",
       )
     ) {
       return;
@@ -130,16 +148,27 @@
 
     setBusy(true);
     try {
-      showToast("Собираем файлы…");
-      const files = await collectDeployFiles();
+      let payload;
 
-      showToast(`Отправка ${files.length} файлов…`);
+      if (fromLocal) {
+        showToast("Собираем файлы с компьютера…");
+        const files = await collectDeployFiles();
+        showToast(`Отправка ${files.length} файлов…`);
+        payload = {
+          source: "browser",
+          files,
+          message: "Публикация из админки (локально)",
+        };
+      } else {
+        showToast("Берём файлы из GitHub (main)…");
+        payload = {
+          source: "repository",
+          message: "Публикация из админки (из репозитория)",
+        };
+      }
 
       const { data, error } = await supabase.functions.invoke("publish-site", {
-        body: {
-          files,
-          message: "Публикация из админки antonovka.studio",
-        },
+        body: payload,
       });
 
       if (data?.error) {
