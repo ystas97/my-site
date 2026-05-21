@@ -284,13 +284,6 @@
     document.getElementById("btnSaveContacts")?.addEventListener("click", () => saveContacts());
     document.getElementById("btnSaveContactsTop")?.addEventListener("click", () => saveContacts());
 
-    aboutForm?.person1Image?.addEventListener("input", () =>
-      updatePersonPreview(1, aboutForm.person1Image.value),
-    );
-    aboutForm?.person2Image?.addEventListener("input", () =>
-      updatePersonPreview(2, aboutForm.person2Image.value),
-    );
-
     document.getElementById("person1Upload")?.addEventListener("change", (e) => {
       const file = e.target.files?.[0];
       e.target.value = "";
