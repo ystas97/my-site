@@ -79,4 +79,9 @@
 
   panelConfigs.forEach(syncPanelHeight);
   syncHeaderOffset();
+
+  window.addEventListener("sitecontentready", () => {
+    panelConfigs.forEach(syncPanelHeight);
+    syncHeaderOffset();
+  });
 })();

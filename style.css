@@ -822,6 +822,33 @@ body.popup-open .page {
     gap: 24px;
   }
 
+  /* Плашка не выше экрана — прокрутка внутри «О бюро» */
+  .header.is-about-open .header__about {
+    max-height: calc(100dvh - var(--header-offset, 72px));
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  .header.is-contacts-open .header__contacts {
+    max-height: calc(100dvh - var(--header-offset, 72px));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+
+  /* Линия внизу — на контенте, не на viewport плашки (иначе висит поверх текста при скролле) */
+  .header.is-about-open .header__about::after,
+  .header.is-contacts-open .header__contacts::after {
+    opacity: 0;
+  }
+
+  .header__about-inner,
+  .header__contacts-inner {
+    border-bottom: 1px solid #000;
+  }
+
   /* Flex вместо grid — без «лесенки» и мерцания в Safari при скролле */
   .grid {
     display: flex;
