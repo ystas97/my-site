@@ -79,9 +79,17 @@
     contactsForm.hidden = slug !== "contacts";
   }
 
+  function personImageInput(index) {
+    return aboutForm.querySelector(`input[name="person${index}Image"]`);
+  }
+
+  function personPreviewWrap(index) {
+    return document.getElementById(`person${index}PreviewWrap`);
+  }
+
   function readAboutFromForm() {
     const f = aboutForm;
-    return window.SiteContent.normalizeAbout({
+    const content = window.SiteContent.normalizeAbout({
       blocks: [
         {
           title: "О бюро",
@@ -102,16 +110,25 @@
       people: [
         {
           name: String(f.person1Name.value || "").trim(),
-          image_path: String(f.person1Image.value || "").trim(),
+          image_path: String(personImageInput(1)?.value || "").trim(),
           bullets: textToBullets(f.person1Bullets.value),
         },
         {
           name: String(f.person2Name.value || "").trim(),
-          image_path: String(f.person2Image.value || "").trim(),
+          image_path: String(personImageInput(2)?.value || "").trim(),
           bullets: textToBullets(f.person2Bullets.value),
         },
       ],
     });
+
+    content.people.forEach((person, i) => {
+      const draftPerson = aboutDraft?.people?.[i];
+      if (draftPerson?.image_version && person.image_path === draftPerson.image_path) {
+        person.image_version = draftPerson.image_version;
+      }
+    });
+
+    return content;
   }
 
   function fillAboutForm(about) {
@@ -124,14 +141,14 @@
 
     const people = about.people || [];
     f.person1Name.value = people[0]?.name || "";
-    f.person1Image.value = people[0]?.image_path || "";
+    if (personImageInput(1)) personImageInput(1).value = people[0]?.image_path || "";
     f.person1Bullets.value = bulletsToText(people[0]?.bullets);
     f.person2Name.value = people[1]?.name || "";
-    f.person2Image.value = people[1]?.image_path || "";
+    if (personImageInput(2)) personImageInput(2).value = people[1]?.image_path || "";
     f.person2Bullets.value = bulletsToText(people[1]?.bullets);
 
-    updatePersonPreview(1, people[0]?.image_path);
-    updatePersonPreview(2, people[1]?.image_path);
+    updatePersonPreview(1, people[0]?.image_path, people[0]?.image_version);
+    updatePersonPreview(2, people[1]?.image_path, people[1]?.image_version);
   }
 
   function fillContactsForm(contacts) {
@@ -148,19 +165,46 @@
     });
   }
 
-  function updatePersonPreview(index, path) {
+  function previewUrl(path, version) {
+    if (!path) return "";
+    const base = publicUrl(path) || path;
+    if (!version || path.startsWith("assets/")) return base;
+    const sep = base.includes("?") ? "&" : "?";
+    return `${base}${sep}v=${version}`;
+  }
+
+  function setPersonPreviewLoading(index, loading) {
+    const wrap = personPreviewWrap(index);
+    if (!wrap) return;
+    wrap.classList.toggle("is-uploading", loading);
+    wrap.classList.toggle("is-loading", loading);
+  }
+
+  function updatePersonPreview(index, path, version) {
     const img = document.getElementById(`person${index}Preview`);
-    const wrap = document.getElementById(`person${index}PreviewWrap`);
+    const wrap = personPreviewWrap(index);
     if (!img || !wrap) return;
-    const url = publicUrl(path) || path;
-    if (url) {
-      img.src = url;
-      img.alt = "";
-      wrap.classList.remove("is-empty");
-    } else {
+
+    wrap.classList.remove("is-uploading", "is-loading", "is-error");
+
+    const url = previewUrl(path, version);
+    if (!url) {
       img.removeAttribute("src");
       wrap.classList.add("is-empty");
+      return;
     }
+
+    wrap.classList.remove("is-empty");
+    wrap.classList.add("is-loading");
+
+    img.onload = () => wrap.classList.remove("is-loading");
+    img.onerror = () => {
+      wrap.classList.remove("is-loading");
+      wrap.classList.add("is-empty", "is-error");
+      img.removeAttribute("src");
+    };
+    img.src = url;
+    img.alt = "";
   }
 
   async function loadSections() {
@@ -246,6 +290,17 @@
 
   async function uploadPersonImage(index, file) {
     const path = `site/about/person-${index}.${fileExt(file.name)}`;
+    const version = Date.now();
+    const previewWrap = personPreviewWrap(index);
+    const localUrl = URL.createObjectURL(file);
+
+    if (previewWrap) {
+      previewWrap.classList.remove("is-empty");
+      previewWrap.classList.add("is-uploading");
+      const img = document.getElementById(`person${index}Preview`);
+      if (img) img.src = localUrl;
+    }
+
     const supabase = client();
     const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
       upsert: true,
@@ -253,10 +308,24 @@
     });
     if (error) throw error;
 
-    const field = aboutForm[`person${index}Image`];
-    field.value = path;
-    updatePersonPreview(index, path);
-    showToast("Фото загружено — нажмите «Сохранить»");
+    URL.revokeObjectURL(localUrl);
+
+    const field = personImageInput(index);
+    if (field) field.value = path;
+
+    const content = readAboutFromForm();
+    const person = content.people[index - 1];
+    if (person) {
+      person.image_path = path;
+      person.image_version = version;
+    }
+
+    await window.SupabasePortfolio.upsertSiteSection("about", content);
+    aboutDraft = content;
+    broadcastUpdate();
+
+    updatePersonPreview(index, path, version);
+    showToast("Фото сохранено и опубликовано на сайте");
   }
 
   function bindEvents() {
@@ -289,9 +358,13 @@
       e.target.value = "";
       if (!file) return;
       setBusy(true);
+      setPersonPreviewLoading(1, true);
       uploadPersonImage(1, file)
         .catch((err) => showToast(err.message, true))
-        .finally(() => setBusy(false));
+        .finally(() => {
+          setPersonPreviewLoading(1, false);
+          setBusy(false);
+        });
     });
 
     document.getElementById("person2Upload")?.addEventListener("change", (e) => {
@@ -299,9 +372,13 @@
       e.target.value = "";
       if (!file) return;
       setBusy(true);
+      setPersonPreviewLoading(2, true);
       uploadPersonImage(2, file)
         .catch((err) => showToast(err.message, true))
-        .finally(() => setBusy(false));
+        .finally(() => {
+          setPersonPreviewLoading(2, false);
+          setBusy(false);
+        });
     });
   }
 

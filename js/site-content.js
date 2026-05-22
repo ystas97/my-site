@@ -65,13 +65,21 @@
       .replace(/"/g, "&quot;");
   }
 
-  function resolveImageUrl(path) {
+  function resolveImageUrl(path, cacheVersion) {
     if (!path) return "";
-    if (/^https?:\/\//i.test(path)) return path;
-    if (window.SupabasePortfolio?.storagePublicUrl && !path.startsWith("assets/")) {
-      return window.SupabasePortfolio.storagePublicUrl(path) || path;
+    let url = path;
+    if (/^https?:\/\//i.test(path)) {
+      url = path;
+    } else if (window.SupabasePortfolio?.storagePublicUrl && !path.startsWith("assets/")) {
+      url = window.SupabasePortfolio.storagePublicUrl(path) || path;
+    } else {
+      url = path.replace(/^\//, "");
     }
-    return path.replace(/^\//, "");
+    if (cacheVersion && !path.startsWith("assets/")) {
+      const sep = url.includes("?") ? "&" : "?";
+      return `${url}${sep}v=${cacheVersion}`;
+    }
+    return url;
   }
 
   function phoneHref(phone) {
@@ -92,6 +100,7 @@
       people: people.map((p, i) => ({
         name: p.name || DEFAULT_ABOUT.people[i]?.name || "",
         image_path: p.image_path || DEFAULT_ABOUT.people[i]?.image_path || "",
+        image_version: p.image_version || null,
         bullets: Array.isArray(p.bullets) ? p.bullets.filter(Boolean) : [],
       })),
     };
@@ -106,9 +115,13 @@
     };
   }
 
-  function renderAbout(about) {
+  function renderAbout(about, sectionUpdatedAt) {
     const inner = document.querySelector("#headerAbout .header__about-inner");
     if (!inner) return;
+
+    const sectionBust = sectionUpdatedAt
+      ? new Date(sectionUpdatedAt).getTime()
+      : null;
 
     const blocksHtml = about.blocks
       .map((block) => {
@@ -129,7 +142,8 @@
 
     const peopleHtml = about.people
       .map((person) => {
-        const src = resolveImageUrl(person.image_path);
+        const bust = person.image_version || sectionBust;
+        const src = resolveImageUrl(person.image_path, bust);
         const bullets = person.bullets
           .map((line) => `<li>${escapeHtml(line)}</li>`)
           .join("");
@@ -164,11 +178,13 @@
   async function fetchSections() {
     if (!window.SupabasePortfolio?.isConfigured()) return null;
     const client = window.SupabasePortfolio.getClient();
-    const { data, error } = await client.from("site_sections").select("slug, content");
+    const { data, error } = await client
+      .from("site_sections")
+      .select("slug, content, updated_at");
     if (error) throw error;
     const map = {};
     (data || []).forEach((row) => {
-      map[row.slug] = row.content;
+      map[row.slug] = { content: row.content, updated_at: row.updated_at };
     });
     return map;
   }
@@ -176,18 +192,22 @@
   async function initSiteContent() {
     let about = DEFAULT_ABOUT;
     let contacts = DEFAULT_CONTACTS;
+    let aboutUpdatedAt = null;
 
     try {
       const map = await fetchSections();
       if (map) {
-        if (map.about) about = normalizeAbout(map.about);
-        if (map.contacts) contacts = normalizeContacts(map.contacts);
+        if (map.about) {
+          about = normalizeAbout(map.about.content);
+          aboutUpdatedAt = map.about.updated_at;
+        }
+        if (map.contacts) contacts = normalizeContacts(map.contacts.content);
       }
     } catch (err) {
       console.warn("Контент секций (fallback на вёрстку):", err);
     }
 
-    renderAbout(about);
+    renderAbout(about, aboutUpdatedAt);
     renderContacts(contacts);
     notifyLayout();
 
