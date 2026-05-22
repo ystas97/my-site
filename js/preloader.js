@@ -16,12 +16,30 @@
 
     const elapsed = Date.now() - startedAt;
     const delay = Math.max(0, MIN_SHOW_MS - elapsed);
+    const FADE_MS = 550;
 
     window.setTimeout(() => {
-      preloader.classList.add("is-hidden");
+      preloader.classList.add("is-hiding");
       preloader.setAttribute("aria-hidden", "true");
       document.body.classList.remove("is-preloading");
-      window.setTimeout(() => preloader.remove(), 550);
+      document.body.classList.add("is-preloader-hiding");
+
+      const cleanup = () => {
+        document.body.classList.remove("is-preloader-hiding");
+        preloader.remove();
+      };
+
+      let done = false;
+      const finish = () => {
+        if (done) return;
+        done = true;
+        cleanup();
+      };
+
+      preloader.addEventListener("transitionend", (e) => {
+        if (e.propertyName === "opacity") finish();
+      });
+      window.setTimeout(finish, FADE_MS + 80);
     }, delay);
   }
 
