@@ -1,5 +1,2 @@
 # Локальная конфигурация Supabase CLI
 # https://supabase.com/docs/guides/cli/config
-
-[functions.publish-site]
-verify_jwt = true

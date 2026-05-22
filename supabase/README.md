@@ -53,4 +53,4 @@ Bucket **project-images** — все изображения проектов.
 
 RLS уже разрешает `authenticated` полный доступ к таблицам и загрузку в Storage.
 
-Публикация HTML/CSS/JS на GitHub Pages из админки: см. **[DEPLOY.md](./DEPLOY.md)** (Edge Function `publish-site`).
+Публикация HTML/CSS/JS на GitHub Pages — через **`git push`** в репозиторий GitHub (ветка `main`).

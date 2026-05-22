@@ -1140,10 +1140,6 @@
     btn.addEventListener("click", () => saveProject());
   });
   document.getElementById("btnDelete").addEventListener("click", deleteProject);
-  document.getElementById("btnPublishSite")?.addEventListener("click", () => {
-    window.AdminPublish?.publishSite(showToast, setBusy);
-  });
-
   coverInput.addEventListener("change", () => {
     const file = coverInput.files?.[0];
     if (!file) return;
