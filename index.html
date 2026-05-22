@@ -41,9 +41,21 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Raleway:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=grid-fix-20" />
+  <link rel="stylesheet" href="style.css?v=preloader-1" />
 </head>
 <body>
+  <div id="preloader" class="preloader" role="status" aria-live="polite" aria-label="Загрузка">
+    <video
+      class="preloader__video"
+      src="assets/video/preloader.mp4"
+      muted
+      playsinline
+      autoplay
+      preload="auto"
+    ></video>
+  </div>
+  <script src="js/preloader.js"></script>
+
   <div class="page">
     <header class="header">
       <div class="header__inner">
