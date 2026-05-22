@@ -4,7 +4,6 @@
 
 - **Сайт:** https://ystas97.github.io/my-site/
 - **Репозиторий:** https://github.com/ystas97/my-site
-- **Макет:** [Figma — главная](https://www.figma.com/design/csJ8xddaMM78gFZrEcXU1i/?node-id=303-984)
 
 ## Стек
 
