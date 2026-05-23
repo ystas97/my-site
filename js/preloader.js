@@ -16,7 +16,8 @@
 
     const elapsed = Date.now() - startedAt;
     const delay = Math.max(0, MIN_SHOW_MS - elapsed);
-    const FADE_MS = 550;
+    const FADE_MS = 650;
+    const FADE_START_MS = 100;
 
     window.setTimeout(() => {
       preloader.classList.add("is-hiding");
@@ -36,11 +37,15 @@
         cleanup();
       };
 
-      preloader.addEventListener("transitionend", (e) => {
-        if (e.propertyName === "opacity") finish();
-      });
-      window.setTimeout(finish, FADE_MS + 80);
-    }, delay);
+      preloader.addEventListener(
+        "transitionend",
+        (e) => {
+          if (e.target === preloader && e.propertyName === "opacity") finish();
+        },
+        { once: true },
+      );
+      window.setTimeout(finish, FADE_MS + 120);
+    }, delay + FADE_START_MS);
   }
 
   video.addEventListener("ended", hidePreloader);
