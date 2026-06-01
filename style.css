@@ -679,7 +679,7 @@ body.popup-open .page {
   overflow: hidden;
   max-height: var(--footer-bar-size);
   background: #fffefe;
-  border-top: 1px solid #000;
+  border-top: 1.2px solid #000;
   transition:
     max-height var(--popup-duration) ease-in-out,
     box-shadow var(--popup-duration) ease-in-out;
