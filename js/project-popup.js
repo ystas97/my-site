@@ -66,6 +66,7 @@
   function mediaUrl(file) {
     if (!file) return "";
     if (/^https?:\/\//i.test(file)) return file;
+    if (file.startsWith("assets/")) return file;
     return `assets/images/${file.replace(/^\//, "")}`;
   }
 
