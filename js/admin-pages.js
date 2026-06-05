@@ -288,8 +288,15 @@
     return parts.length > 1 ? parts.pop().toLowerCase() : "jpg";
   }
 
+  function workerConfig() {
+    const url = window.UPLOAD_WORKER_URL?.trim();
+    const secret = window.UPLOAD_WORKER_SECRET?.trim();
+    if (!url || !secret) throw new Error("UPLOAD_WORKER_URL / UPLOAD_WORKER_SECRET не заданы в supabase-config.js");
+    return { url, secret };
+  }
+
   async function uploadPersonImage(index, file) {
-    const path = `site/about/person-${index}.${fileExt(file.name)}`;
+    const path = `assets/images/about/person-${index}.${fileExt(file.name)}`;
     const version = Date.now();
     const previewWrap = personPreviewWrap(index);
     const localUrl = URL.createObjectURL(file);
@@ -301,12 +308,19 @@
       if (img) img.src = localUrl;
     }
 
-    const supabase = client();
-    const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
-      upsert: true,
-      contentType: file.type,
+    const { url, secret } = workerConfig();
+    const form = new FormData();
+    form.append("file", file);
+    form.append("path", path);
+    const res = await fetch(`${url}/upload`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${secret}` },
+      body: form,
     });
-    if (error) throw error;
+    if (!res.ok) {
+      const msg = await res.text().catch(() => res.statusText);
+      throw new Error(`Worker upload failed: ${msg}`);
+    }
 
     URL.revokeObjectURL(localUrl);
 

@@ -38,6 +38,7 @@
   function storagePublicUrl(path) {
     if (!path) return "";
     if (/^https?:\/\//i.test(path)) return path;
+    if (path.startsWith("assets/")) return path;
     const client = getClient();
     if (!client) return "";
     const { data } = client.storage.from(BUCKET).getPublicUrl(path.replace(/^\//, ""));

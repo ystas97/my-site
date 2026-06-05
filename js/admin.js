@@ -94,29 +94,61 @@
   }
 
   function coverStoragePath(projectId, filename) {
-    return `projects/${projectId}/cover.${fileExt(filename)}`;
+    return `assets/images/projects/${projectId}/cover.${fileExt(filename)}`;
   }
 
   function galleryStoragePath(projectId, filename, index) {
     const safe = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
-    return `projects/${projectId}/gallery/${String(index).padStart(2, "0")}_${safe}`;
+    return `assets/images/projects/${projectId}/gallery/${String(index).padStart(2, "0")}_${safe}`;
+  }
+
+  function workerConfig() {
+    const url = window.UPLOAD_WORKER_URL?.trim();
+    const secret = window.UPLOAD_WORKER_SECRET?.trim();
+    if (!url || !secret) throw new Error("UPLOAD_WORKER_URL / UPLOAD_WORKER_SECRET не заданы в supabase-config.js");
+    return { url, secret };
   }
 
   async function uploadStorage(path, file) {
-    const supabase = client();
-    const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
-      upsert: true,
-      contentType: file.type,
+    const { url, secret } = workerConfig();
+    const form = new FormData();
+    form.append("file", file);
+    form.append("path", path);
+    const res = await fetch(`${url}/upload`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${secret}` },
+      body: form,
     });
-    if (error) throw error;
+    if (!res.ok) {
+      const msg = await res.text().catch(() => res.statusText);
+      throw new Error(`Worker upload failed: ${msg}`);
+    }
     return path;
   }
 
   async function removeStorage(paths) {
     if (!paths.length) return;
-    const supabase = client();
-    const { error } = await supabase.storage.from(BUCKET).remove(paths);
-    if (error) console.warn("Storage remove:", error.message);
+    const onlyGitHub = paths.filter((p) => p.startsWith("assets/images/"));
+    const onlySupabase = paths.filter((p) => !p.startsWith("assets/images/"));
+
+    if (onlyGitHub.length) {
+      try {
+        const { url, secret } = workerConfig();
+        await fetch(`${url}/delete`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${secret}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ paths: onlyGitHub }),
+        });
+      } catch (err) {
+        console.warn("Worker delete:", err.message);
+      }
+    }
+
+    if (onlySupabase.length) {
+      const supabase = client();
+      const { error } = await supabase.storage.from(BUCKET).remove(onlySupabase);
+      if (error) console.warn("Storage remove:", error.message);
+    }
   }
 
   async function fetchAllProjects() {
