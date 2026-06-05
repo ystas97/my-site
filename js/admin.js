@@ -579,7 +579,8 @@
       }
 
       await saveAllProjects();
-      await loadProjects({ preserveFormDraft: true });
+      renderProjectList();
+      fillForm(getCurrentProject(), { preserveFormDraft: true });
       notifyMainSiteRefresh();
       setMediaStatus("gallery", "Фото загружены");
       showToast(total === 1 ? "Фото добавлено" : `Загружено фото: ${total}`);
@@ -775,7 +776,6 @@
 
       await saveAllProjects();
       clearPendingFiles();
-      await loadProjects();
       selectProject(currentId);
       notifyMainSiteRefresh();
       setMediaStatus("cover", "");
@@ -803,7 +803,8 @@
       }
       await saveAllProjects();
       await removeStorage([storagePath]);
-      await loadProjects({ preserveFormDraft: true });
+      renderProjectList();
+      fillForm(getCurrentProject(), { preserveFormDraft: true });
       showToast("Фото удалено");
     } catch (err) {
       showToast(err.message || "Не удалось удалить", true);
@@ -862,7 +863,7 @@
       projectForm.hidden = true;
       emptyState.hidden = false;
       clearPendingFiles();
-      await loadProjects();
+      renderProjectList();
       showToast("Проект удалён");
     } catch (err) {
       showToast(err.message || "Не удалось удалить", true);
