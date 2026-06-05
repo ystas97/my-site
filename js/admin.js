@@ -836,7 +836,6 @@
       };
       projects.unshift(newProject);
       await saveAllProjects();
-      await loadProjects();
       selectProject(id);
       resetCoverPreview();
       setMediaStatus("cover", "Выберите обложку — загрузится сразу");
