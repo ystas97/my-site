@@ -120,7 +120,18 @@
     return `assets/images/projects/${projectId}/gallery/${String(index).padStart(2, "0")}_${safe}`;
   }
 
+  // Локальные превью только что загруженных файлов (до деплоя GitHub Pages)
+  const localPreviews = new Map();
+
+  function rememberLocalPreview(path, file) {
+    if (!path || !file) return;
+    const prev = localPreviews.get(path);
+    if (prev) URL.revokeObjectURL(prev);
+    localPreviews.set(path, URL.createObjectURL(file));
+  }
+
   function publicUrl(path) {
+    if (path && localPreviews.has(path)) return localPreviews.get(path);
     const url = window.SupabasePortfolio?.storagePublicUrl(path) || path || "";
     // Админка в /admin/ — относительные assets-пути ведут из корня сайта
     if (url && !/^https?:\/\//i.test(url) && url.startsWith("assets/")) {
@@ -147,6 +158,7 @@
       const msg = await res.text().catch(() => res.statusText);
       throw new Error(`Worker upload failed: ${msg}`);
     }
+    rememberLocalPreview(path, file);
     return path;
   }
 
