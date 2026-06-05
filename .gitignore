@@ -1,3 +1,5 @@
 .DS_Store
 js/supabase-config.js
 supabase/.temp/
+node_modules/
+cloudflare-worker/node_modules/
