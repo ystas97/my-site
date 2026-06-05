@@ -1,6 +1,5 @@
 (function () {
-  const BUCKET = window.SupabasePortfolio?.BUCKET || "project-images";
-
+  // ── DOM refs ──────────────────────────────────────────────────────────────
   const loginScreen = document.getElementById("loginScreen");
   const appScreen = document.getElementById("appScreen");
   const loginForm = document.getElementById("loginForm");
@@ -20,73 +19,92 @@
 
   const STORAGE_SYNC_KEY = "antonovka_projects_updated_at";
   const SYNC_CHANNEL = "antonovka-portfolio-sync";
+  const TOKEN_KEY = "antonovka_worker_token";
 
   let projects = [];
   let currentId = null;
   let pendingGalleryFiles = [];
   let isBusy = false;
-  let isLoggingIn = false;
 
-  function client() {
-    return window.SupabasePortfolio?.getClient();
+  // ── Worker API ────────────────────────────────────────────────────────────
+
+  function getWorkerUrl() {
+    return (window.UPLOAD_WORKER_URL || "").trim();
   }
 
-  function publicUrl(path) {
-    return window.SupabasePortfolio?.storagePublicUrl(path) || "";
+  function getToken() {
+    return localStorage.getItem(TOKEN_KEY) || "";
   }
 
-  function showToast(message, isError) {
-    toast.textContent = message;
-    toast.classList.toggle("is-error", Boolean(isError));
-    toast.hidden = false;
-    clearTimeout(showToast._t);
-    showToast._t = setTimeout(() => {
-      toast.hidden = true;
-    }, 5000);
+  function clearToken() {
+    localStorage.removeItem(TOKEN_KEY);
   }
 
-  function showLoginError(message) {
-    showLogin();
-    loginError.textContent = message;
-    loginError.hidden = false;
-    showToast(message, true);
+  async function workerFetch(method, path, body) {
+    const url = getWorkerUrl();
+    if (!url) throw new Error("UPLOAD_WORKER_URL не задан в supabase-config.js");
+
+    const opts = { method, headers: { Authorization: `Bearer ${getToken()}` } };
+
+    if (body instanceof FormData) {
+      opts.body = body;
+    } else if (body !== undefined) {
+      opts.headers["Content-Type"] = "application/json";
+      opts.body = JSON.stringify(body);
+    }
+
+    const res = await fetch(`${url}${path}`, opts);
+
+    if (res.status === 401) {
+      clearToken();
+      showLogin();
+      throw new Error("Сессия истекла — войдите снова");
+    }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+    return res.json();
   }
 
-  function setBusy(busy) {
-    isBusy = busy;
-    document.querySelectorAll(".admin-btn").forEach((btn) => {
-      btn.disabled = busy;
+  // ── auth ──────────────────────────────────────────────────────────────────
+
+  async function loginWithPassword(password) {
+    const url = getWorkerUrl();
+    if (!url) throw new Error("UPLOAD_WORKER_URL не задан в supabase-config.js");
+    const res = await fetch(`${url}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+    if (!res.ok) throw new Error("Неверный пароль");
+    const { token } = await res.json();
+    localStorage.setItem(TOKEN_KEY, token);
+    return token;
+  }
+
+  // ── data helpers ──────────────────────────────────────────────────────────
+
+  function newId() {
+    return typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2) + Date.now().toString(36);
+  }
+
+  async function fetchAllProjects() {
+    const data = await workerFetch("GET", "/data/projects");
+    return Array.isArray(data.projects) ? data.projects : [];
+  }
+
+  async function saveAllProjects() {
+    await workerFetch("PUT", "/data/projects", {
+      version: 1,
+      updated_at: new Date().toISOString(),
+      projects,
     });
   }
 
-  function translitSlug(text) {
-    const map = {
-      а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "e", ж: "zh", з: "z", и: "i",
-      й: "y", к: "k", л: "l", м: "m", н: "n", о: "o", п: "p", р: "r", с: "s", т: "t",
-      у: "u", ф: "f", х: "h", ц: "ts", ч: "ch", ш: "sh", щ: "sch", ъ: "", ы: "y", ь: "",
-      э: "e", ю: "yu", я: "ya",
-    };
-    return text
-      .toLowerCase()
-      .split("")
-      .map((ch) => map[ch] ?? ch)
-      .join("")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 48);
-  }
-
-  function makeUniqueSlug(title, excludeId) {
-    let base = translitSlug(title);
-    if (!base) base = `project-${Date.now()}`;
-    let slug = base;
-    let n = 2;
-    while (projects.some((p) => p.slug === slug && p.id !== excludeId)) {
-      slug = `${base}-${n}`;
-      n += 1;
-    }
-    return slug;
-  }
+  // ── file paths ────────────────────────────────────────────────────────────
 
   function fileExt(name) {
     const parts = name.split(".");
@@ -102,23 +120,24 @@
     return `assets/images/projects/${projectId}/gallery/${String(index).padStart(2, "0")}_${safe}`;
   }
 
-  function workerConfig() {
-    const url = window.UPLOAD_WORKER_URL?.trim();
-    const secret = window.UPLOAD_WORKER_SECRET?.trim();
-    if (!url || !secret) throw new Error("UPLOAD_WORKER_URL / UPLOAD_WORKER_SECRET не заданы в supabase-config.js");
-    return { url, secret };
+  function publicUrl(path) {
+    return window.SupabasePortfolio?.storagePublicUrl(path) || path || "";
   }
 
+  // ── file upload / delete via Worker ──────────────────────────────────────
+
   async function uploadStorage(path, file) {
-    const { url, secret } = workerConfig();
+    const url = getWorkerUrl();
+    if (!url) throw new Error("UPLOAD_WORKER_URL не задан в supabase-config.js");
     const form = new FormData();
     form.append("file", file);
     form.append("path", path);
     const res = await fetch(`${url}/upload`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${secret}` },
+      headers: { Authorization: `Bearer ${getToken()}` },
       body: form,
     });
+    if (res.status === 401) { clearToken(); showLogin(); throw new Error("Сессия истекла"); }
     if (!res.ok) {
       const msg = await res.text().catch(() => res.statusText);
       throw new Error(`Worker upload failed: ${msg}`);
@@ -128,62 +147,166 @@
 
   async function removeStorage(paths) {
     if (!paths.length) return;
-    const onlyGitHub = paths.filter((p) => p.startsWith("assets/images/"));
-    const onlySupabase = paths.filter((p) => !p.startsWith("assets/images/"));
-
-    if (onlyGitHub.length) {
-      try {
-        const { url, secret } = workerConfig();
-        await fetch(`${url}/delete`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${secret}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ paths: onlyGitHub }),
-        });
-      } catch (err) {
-        console.warn("Worker delete:", err.message);
-      }
-    }
-
-    if (onlySupabase.length) {
-      const supabase = client();
-      const { error } = await supabase.storage.from(BUCKET).remove(onlySupabase);
-      if (error) console.warn("Storage remove:", error.message);
+    const url = getWorkerUrl();
+    if (!url) return;
+    const githubPaths = paths.filter((p) => p && p.startsWith("assets/images/"));
+    if (!githubPaths.length) return;
+    try {
+      await fetch(`${url}/delete`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${getToken()}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ paths: githubPaths }),
+      });
+    } catch (err) {
+      console.warn("Worker delete:", err.message);
     }
   }
 
-  async function fetchAllProjects() {
-    const supabase = client();
-    const { data, error } = await supabase
-      .from("projects")
-      .select(
-        `
-        id,
-        slug,
-        title,
-        city,
-        year,
-        status,
-        typology,
-        description,
-        cover_path,
-        sort_order,
-        published,
-        project_images (
-          id,
-          storage_path,
-          sort_order
-        )
-      `
-      )
-      .order("sort_order", { ascending: true });
+  // ── toast / busy ──────────────────────────────────────────────────────────
 
-    if (error) throw error;
-
-    return (data || []).map((row) => ({
-      ...row,
-      project_images: (row.project_images || []).sort((a, b) => a.sort_order - b.sort_order),
-    }));
+  function showToast(message, isError) {
+    toast.textContent = message;
+    toast.classList.toggle("is-error", Boolean(isError));
+    toast.hidden = false;
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => { toast.hidden = true; }, 5000);
   }
+
+  function showLoginError(message) {
+    showLogin();
+    loginError.textContent = message;
+    loginError.hidden = false;
+    showToast(message, true);
+  }
+
+  function setBusy(busy) {
+    isBusy = busy;
+    document.querySelectorAll(".admin-btn").forEach((btn) => { btn.disabled = busy; });
+  }
+
+  // ── slugs ─────────────────────────────────────────────────────────────────
+
+  function translitSlug(text) {
+    const map = {
+      а:"a",б:"b",в:"v",г:"g",д:"d",е:"e",ё:"e",ж:"zh",з:"z",и:"i",
+      й:"y",к:"k",л:"l",м:"m",н:"n",о:"o",п:"p",р:"r",с:"s",т:"t",
+      у:"u",ф:"f",х:"h",ц:"ts",ч:"ch",ш:"sh",щ:"sch",ъ:"",ы:"y",ь:"",
+      э:"e",ю:"yu",я:"ya",
+    };
+    return text.toLowerCase().split("").map((ch) => map[ch] ?? ch).join("")
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48);
+  }
+
+  function makeUniqueSlug(title, excludeId) {
+    let base = translitSlug(title);
+    if (!base) base = `project-${Date.now()}`;
+    let slug = base;
+    let n = 2;
+    while (projects.some((p) => p.slug === slug && p.id !== excludeId)) {
+      slug = `${base}-${n}`;
+      n += 1;
+    }
+    return slug;
+  }
+
+  // ── HTML helpers ──────────────────────────────────────────────────────────
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function setMediaStatus(type, msg, busy) {
+    const el = type === "cover" ? coverMediaStatus : galleryMediaStatus;
+    if (!el) return;
+    el.textContent = msg || "";
+    el.hidden = !msg;
+    if (busy) el.classList.add("is-loading");
+    else el.classList.remove("is-loading");
+  }
+
+  // ── cover preview ─────────────────────────────────────────────────────────
+
+  function setCoverPreviewUrl(url) {
+    if (!url) { resetCoverPreview(); return; }
+    if (!coverPreview || !coverPreviewWrap) return;
+    coverPreviewWrap.classList.remove("is-empty", "is-error");
+    coverPreviewWrap.classList.add("is-loading");
+    coverPreview.onload = () => coverPreviewWrap.classList.remove("is-loading");
+    coverPreview.onerror = () => {
+      coverPreviewWrap.classList.remove("is-loading");
+      coverPreviewWrap.classList.add("is-empty", "is-error");
+    };
+    coverPreview.src = url;
+  }
+
+  function resetCoverPreview() {
+    if (!coverPreview || !coverPreviewWrap) return;
+    coverPreview.removeAttribute("src");
+    coverPreviewWrap.classList.add("is-empty");
+    coverPreviewWrap.classList.remove("is-loading", "is-error", "is-uploading");
+  }
+
+  function setCoverPreviewFile(file) {
+    if (!file) return;
+    setCoverPreviewUrl(URL.createObjectURL(file));
+  }
+
+  // ── gallery render ────────────────────────────────────────────────────────
+
+  function bindGalleryImageLoad(li) {
+    const img = li.querySelector("img");
+    if (!img) return;
+    li.classList.add("is-loading");
+    const done = () => li.classList.remove("is-loading");
+    img.addEventListener("load", done, { once: true });
+    img.addEventListener("error", done, { once: true });
+  }
+
+  function renderGallery(project) {
+    const items = [];
+
+    (project.project_images || []).forEach((img) => {
+      items.push(`
+        <li class="admin-gallery__item is-loading" draggable="true" data-image-id="${escapeHtml(img.id)}" data-path="${escapeHtml(img.storage_path)}">
+          <span class="admin-gallery__handle" title="Перетащить" aria-hidden="true">⋮⋮</span>
+          <img src="${escapeHtml(publicUrl(img.storage_path))}" alt="" loading="lazy" draggable="false" />
+          <button type="button" class="admin-gallery__remove" aria-label="Удалить">×</button>
+        </li>
+      `);
+    });
+
+    pendingGalleryFiles.forEach((file, index) => {
+      const url = URL.createObjectURL(file);
+      items.push(`
+        <li class="admin-gallery__item" draggable="true" data-pending-index="${index}">
+          <span class="admin-gallery__handle" title="Перетащить" aria-hidden="true">⋮⋮</span>
+          <img src="${url}" alt="" draggable="false" />
+          <span class="admin-gallery__badge is-pending">загрузка…</span>
+        </li>
+      `);
+    });
+
+    galleryList.innerHTML = items.join("");
+    galleryList.querySelectorAll(".admin-gallery__item").forEach(bindGalleryImageLoad);
+
+    if (pendingGalleryFiles.length) {
+      setMediaStatus("gallery", "Загрузка…", true);
+    } else if ((project.project_images || []).length) {
+      setMediaStatus("gallery", "");
+    }
+
+    galleryList.querySelectorAll(".admin-gallery__remove").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const li = btn.closest(".admin-gallery__item");
+        const imageId = li?.dataset.imageId;
+        if (imageId) removeGalleryImage(imageId, li.dataset.path);
+      });
+    });
+  }
+
+  // ── project list ──────────────────────────────────────────────────────────
 
   const EYE_OPEN_SVG = `<svg class="admin-project-list__eye-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
   const EYE_OFF_SVG = `<svg class="admin-project-list__eye-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
@@ -215,21 +338,85 @@
       .join("");
   }
 
+  function getCurrentProject() {
+    return projects.find((p) => p.id === currentId) || null;
+  }
+
+  function clearPendingFiles() {
+    pendingGalleryFiles = [];
+  }
+
+  // ── form ──────────────────────────────────────────────────────────────────
+
+  function readFormFields() {
+    const fd = new FormData(projectForm);
+    return {
+      title: String(fd.get("title") || "").trim(),
+      city: String(fd.get("city") || "").trim(),
+      year: String(fd.get("year") || "").trim(),
+      sort_order: Number(fd.get("sort_order")) || 0,
+      status: String(fd.get("status") || "").trim() || "Концепция",
+      typology: String(fd.get("typology") || "").trim() || "Общественное здание",
+      description: String(fd.get("description") || "").trim(),
+      published: Boolean(getCurrentProject()?.published),
+    };
+  }
+
+  function fillForm(project, opts = {}) {
+    const draft = opts.preserveFormDraft ? readFormFields() : null;
+    projectForm.hidden = false;
+    emptyState.hidden = true;
+
+    const f = projectForm.elements;
+    f.title.value = project.title;
+    f.city.value = project.city;
+    f.year.value = project.year;
+    f.sort_order.value = project.sort_order;
+    f.status.value = project.status || "";
+    f.typology.value = project.typology || "";
+    f.description.value = project.description || "";
+
+    if (draft) {
+      Object.assign(f, {});
+      f.title.value = draft.title;
+      f.city.value = draft.city;
+      f.year.value = draft.year;
+      f.sort_order.value = draft.sort_order;
+      f.status.value = draft.status;
+      f.typology.value = draft.typology;
+      f.description.value = draft.description;
+      formTitle.textContent = draft.title || "Проект";
+    } else {
+      formTitle.textContent = project.title || "Проект";
+    }
+
+    if (project.cover_path) {
+      setCoverPreviewUrl(publicUrl(project.cover_path));
+    } else {
+      resetCoverPreview();
+    }
+    renderGallery(project);
+  }
+
+  function selectProject(id) {
+    currentId = id;
+    clearPendingFiles();
+    const project = getCurrentProject();
+    if (!project) return;
+    fillForm(project);
+    renderProjectList();
+  }
+
+  // ── publish toggle ────────────────────────────────────────────────────────
+
   async function setProjectPublished(projectId, published) {
     if (isBusy) return;
-
     setBusy(true);
     try {
-      const supabase = client();
-      const { error } = await supabase
-        .from("projects")
-        .update({ published })
-        .eq("id", projectId);
-      if (error) throw error;
-
       const project = projects.find((p) => p.id === projectId);
-      if (project) project.published = published;
-
+      if (!project) return;
+      project.published = published;
+      await saveAllProjects();
       renderProjectList();
       notifyMainSiteRefresh();
       showToast(published ? "Проект показан на сайте" : "Проект скрыт с сайта");
@@ -242,85 +429,37 @@
     }
   }
 
+  // ── sort order ────────────────────────────────────────────────────────────
+
   function applySortOrderToProjects() {
-    projects.forEach((p, index) => {
-      p.sort_order = index + 1;
-    });
+    projects.forEach((p, index) => { p.sort_order = index + 1; });
   }
 
   async function saveSortOrder() {
     if (!projects.length) return;
-
     setBusy(true);
     try {
-      const supabase = client();
-      const updates = projects.map((p) =>
-        supabase.from("projects").update({ sort_order: p.sort_order }).eq("id", p.id)
-      );
-      const results = await Promise.all(updates);
-      const failed = results.find((r) => r.error);
-      if (failed?.error) throw failed.error;
-
+      applySortOrderToProjects();
+      await saveAllProjects();
       notifyMainSiteRefresh();
-      showToast("Порядок на сайте сохранён");
-
-      const current = getCurrentProject();
-      if (current && projectForm.elements.sort_order) {
-        projectForm.elements.sort_order.value = current.sort_order;
-      }
     } catch (err) {
-      console.error(err);
       showToast(err.message || "Не удалось сохранить порядок", true);
-      await loadProjects();
     } finally {
       setBusy(false);
     }
   }
 
-  async function reorderProjects(dragId, targetId) {
-    if (!dragId || !targetId || dragId === targetId || isBusy) return;
-
-    const fromIndex = projects.findIndex((p) => p.id === dragId);
-    const toIndex = projects.findIndex((p) => p.id === targetId);
-    if (fromIndex < 0 || toIndex < 0) return;
-
-    const [moved] = projects.splice(fromIndex, 1);
-    projects.splice(toIndex, 0, moved);
-    applySortOrderToProjects();
-    renderProjectList();
-    await saveSortOrder();
-  }
+  // ── project list DnD ──────────────────────────────────────────────────────
 
   function setupProjectListDnD() {
     let dragId = null;
-    let suppressClick = false;
-
-    projectList.addEventListener("click", (e) => {
-      if (suppressClick) return;
-      if (e.target.closest(".admin-project-list__visibility")) return;
-      const btn = e.target.closest("[data-select-id]");
-      if (!btn) return;
-      selectProject(btn.dataset.selectId);
-    });
-
-    projectList.addEventListener("change", (e) => {
-      const input = e.target.closest("[data-publish-toggle]");
-      if (!input) return;
-      void setProjectPublished(input.dataset.publishToggle, input.checked);
-    });
 
     projectList.addEventListener("dragstart", (e) => {
-      if (e.target.closest(".admin-project-list__visibility")) {
-        e.preventDefault();
-        return;
-      }
       const item = e.target.closest(".admin-project-list__item");
-      if (!item) return;
+      if (!item || isBusy) return;
       dragId = item.dataset.id;
-      suppressClick = true;
       item.classList.add("is-dragging");
       e.dataTransfer.effectAllowed = "move";
-      e.dataTransfer.setData("text/plain", dragId);
     });
 
     projectList.addEventListener("dragend", () => {
@@ -328,9 +467,6 @@
         el.classList.remove("is-dragging", "is-drag-over");
       });
       dragId = null;
-      window.setTimeout(() => {
-        suppressClick = false;
-      }, 0);
     });
 
     projectList.addEventListener("dragover", (e) => {
@@ -343,88 +479,24 @@
       item.classList.add("is-drag-over");
     });
 
-    projectList.addEventListener("drop", (e) => {
+    projectList.addEventListener("drop", async (e) => {
       e.preventDefault();
       const item = e.target.closest(".admin-project-list__item");
-      if (!item || !dragId) return;
-      const targetId = item.dataset.id;
+      if (!item || !dragId || item.dataset.id === dragId) return;
       item.classList.remove("is-drag-over");
-      void reorderProjects(dragId, targetId);
+
+      const fromIndex = projects.findIndex((p) => p.id === dragId);
+      const toIndex = projects.findIndex((p) => p.id === item.dataset.id);
+      if (fromIndex < 0 || toIndex < 0) return;
+
+      const [moved] = projects.splice(fromIndex, 1);
+      projects.splice(toIndex, 0, moved);
+      renderProjectList();
+      await saveSortOrder();
     });
   }
 
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-  }
-
-  function getCurrentProject() {
-    return projects.find((p) => p.id === currentId) || null;
-  }
-
-  function clearPendingFiles() {
-    pendingGalleryFiles = [];
-    coverInput.value = "";
-    galleryInput.value = "";
-    setMediaStatus("cover", "");
-    setMediaStatus("gallery", "");
-    if (coverPreviewWrap) {
-      coverPreviewWrap.classList.remove("is-uploading");
-    }
-  }
-
-  function setMediaStatus(which, text, busy) {
-    const el = which === "cover" ? coverMediaStatus : galleryMediaStatus;
-    if (!el) return;
-    if (!text) {
-      el.hidden = true;
-      el.textContent = "";
-      el.classList.remove("is-busy");
-      return;
-    }
-    el.hidden = false;
-    el.textContent = text;
-    el.classList.toggle("is-busy", Boolean(busy));
-  }
-
-  function resetCoverPreview() {
-    if (!coverPreviewWrap || !coverPreview) return;
-    coverPreview.onload = null;
-    coverPreview.onerror = null;
-    coverPreview.removeAttribute("src");
-    coverPreviewWrap.classList.remove("is-loading", "is-uploading", "is-error");
-    coverPreviewWrap.classList.add("is-empty");
-  }
-
-  function setCoverPreviewUrl(url) {
-    if (!coverPreviewWrap || !coverPreview) return;
-    if (!url) {
-      resetCoverPreview();
-      return;
-    }
-
-    coverPreviewWrap.classList.remove("is-empty", "is-error", "is-uploading");
-    coverPreviewWrap.classList.add("is-loading");
-
-    coverPreview.onload = () => {
-      coverPreviewWrap.classList.remove("is-loading");
-    };
-    coverPreview.onerror = () => {
-      coverPreviewWrap.classList.remove("is-loading");
-      coverPreviewWrap.classList.add("is-empty", "is-error");
-      coverPreview.removeAttribute("src");
-    };
-    coverPreview.src = url;
-  }
-
-  function setCoverPreviewFile(file) {
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    setCoverPreviewUrl(url);
-  }
+  // ── cover upload ──────────────────────────────────────────────────────────
 
   async function uploadCoverNow(file) {
     const projectId = currentId;
@@ -433,22 +505,15 @@
     setCoverPreviewFile(file);
     setBusy(true);
     try {
-      const supabase = client();
       const path = coverStoragePath(projectId, file.name);
-
       if (coverPreviewWrap) coverPreviewWrap.classList.add("is-uploading");
       setMediaStatus("cover", "Загрузка обложки…", true);
 
       await uploadStorage(path, file);
 
-      const { error } = await supabase
-        .from("projects")
-        .update({ cover_path: path })
-        .eq("id", projectId);
-      if (error) throw error;
-
       const project = projects.find((p) => p.id === projectId);
       if (project) project.cover_path = path;
+      await saveAllProjects();
 
       coverInput.value = "";
       if (currentId === projectId) {
@@ -468,6 +533,8 @@
     }
   }
 
+  // ── gallery upload ────────────────────────────────────────────────────────
+
   async function uploadGalleryFilesNow(files) {
     const projectId = currentId;
     if (!projectId || isBusy || !files.length) return;
@@ -479,14 +546,12 @@
 
     setBusy(true);
     try {
-      const supabase = client();
-      let project = getCurrentProject();
-      if (!project) throw new Error("Проект не найден");
+      const proj = getCurrentProject();
+      if (!proj) throw new Error("Проект не найден");
 
-      let nextOrder =
-        project.project_images.length > 0
-          ? Math.max(...project.project_images.map((i) => i.sort_order)) + 1
-          : 0;
+      let nextOrder = (proj.project_images || []).length > 0
+        ? Math.max(...(proj.project_images || []).map((i) => i.sort_order)) + 1
+        : 0;
 
       const total = files.length;
 
@@ -495,31 +560,20 @@
         const domIndex = startIndex + i;
         const li = galleryList.querySelector(`[data-pending-index="${domIndex}"]`);
         if (li) li.classList.add("is-uploading");
-
         setMediaStatus("gallery", `Загрузка фото ${i + 1} из ${total}…`, true);
 
         const path = galleryStoragePath(projectId, file.name, nextOrder);
         await uploadStorage(path, file);
 
-        const { data: imgRow, error: imgError } = await supabase
-          .from("project_images")
-          .insert({
-            project_id: projectId,
-            storage_path: path,
-            sort_order: nextOrder,
-          })
-          .select("id, storage_path, sort_order")
-          .single();
-
-        if (imgError) throw imgError;
-        if (!imgRow?.id) throw new Error("Фото не добавилось в галерею");
+        if (!proj.project_images) proj.project_images = [];
+        proj.project_images.push({ id: newId(), storage_path: path, sort_order: nextOrder });
 
         const pendingIdx = pendingGalleryFiles.indexOf(file);
         if (pendingIdx >= 0) pendingGalleryFiles.splice(pendingIdx, 1);
-
         nextOrder += 1;
       }
 
+      await saveAllProjects();
       await loadProjects({ preserveFormDraft: true });
       notifyMainSiteRefresh();
       setMediaStatus("gallery", "Фото загружены");
@@ -533,69 +587,13 @@
     }
   }
 
-  function bindGalleryImageLoad(li) {
-    const img = li.querySelector("img");
-    if (!img) return;
-    li.classList.add("is-loading");
-    const done = () => li.classList.remove("is-loading");
-    img.addEventListener("load", done, { once: true });
-    img.addEventListener("error", done, { once: true });
-  }
-
-  function renderGallery(project) {
-    const items = [];
-
-    project.project_images.forEach((img) => {
-      items.push(`
-        <li class="admin-gallery__item is-loading" draggable="true" data-image-id="${img.id}" data-path="${escapeHtml(img.storage_path)}">
-          <span class="admin-gallery__handle" title="Перетащить" aria-hidden="true">⋮⋮</span>
-          <img src="${publicUrl(img.storage_path)}" alt="" loading="lazy" draggable="false" />
-          <button type="button" class="admin-gallery__remove" aria-label="Удалить">×</button>
-        </li>
-      `);
-    });
-
-    pendingGalleryFiles.forEach((file, index) => {
-      const url = URL.createObjectURL(file);
-      items.push(`
-        <li class="admin-gallery__item" draggable="true" data-pending-index="${index}">
-          <span class="admin-gallery__handle" title="Перетащить" aria-hidden="true">⋮⋮</span>
-          <img src="${url}" alt="" draggable="false" />
-          <span class="admin-gallery__badge is-pending">загрузка…</span>
-        </li>
-      `);
-    });
-
-    galleryList.innerHTML = items.join("");
-
-    galleryList.querySelectorAll(".admin-gallery__item").forEach((li) => {
-      bindGalleryImageLoad(li);
-    });
-
-    if (pendingGalleryFiles.length) {
-      setMediaStatus("gallery", "Загрузка…", true);
-    } else if (project.project_images.length) {
-      setMediaStatus("gallery", "");
-    }
-
-    galleryList.querySelectorAll(".admin-gallery__remove").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const li = btn.closest(".admin-gallery__item");
-        const imageId = li?.dataset.imageId;
-        if (imageId) removeGalleryImage(imageId, li.dataset.path);
-      });
-    });
-  }
+  // ── gallery sort ──────────────────────────────────────────────────────────
 
   function getGalleryOrderFromDom() {
     return [...galleryList.querySelectorAll(".admin-gallery__item")]
       .map((li) => {
-        if (li.dataset.imageId) {
-          return { type: "saved", id: li.dataset.imageId };
-        }
-        if (li.dataset.pendingIndex !== undefined) {
-          return { type: "pending", index: Number(li.dataset.pendingIndex) };
-        }
+        if (li.dataset.imageId) return { type: "saved", id: li.dataset.imageId };
+        if (li.dataset.pendingIndex !== undefined) return { type: "pending", index: Number(li.dataset.pendingIndex) };
         return null;
       })
       .filter(Boolean);
@@ -608,48 +606,33 @@
   function applyGalleryOrder(order) {
     const project = getCurrentProject();
     if (!project) return;
-
-    const savedById = new Map(project.project_images.map((img) => [img.id, img]));
+    const savedById = new Map((project.project_images || []).map((img) => [img.id, img]));
     const newImages = [];
     const newPending = [];
-
     order.forEach((entry, sortOrder) => {
       if (entry.type === "saved") {
         const img = savedById.get(entry.id);
-        if (img) {
-          img.sort_order = sortOrder;
-          newImages.push(img);
-        }
+        if (img) { img.sort_order = sortOrder; newImages.push(img); }
       } else {
         const file = pendingGalleryFiles[entry.index];
         if (file) newPending.push(file);
       }
     });
-
     project.project_images = newImages;
     pendingGalleryFiles = newPending;
   }
 
   async function saveGallerySortOrder() {
     const project = getCurrentProject();
-    if (!project?.project_images.length || !currentId) return;
-
+    if (!(project?.project_images?.length) || !currentId) return;
     setBusy(true);
     try {
-      const supabase = client();
-      const updates = project.project_images.map((img) =>
-        supabase.from("project_images").update({ sort_order: img.sort_order }).eq("id", img.id),
-      );
-      const results = await Promise.all(updates);
-      const failed = results.find((r) => r.error);
-      if (failed?.error) throw failed.error;
-
+      await saveAllProjects();
       notifyMainSiteRefresh();
       showToast("Порядок фото в галерее сохранён");
     } catch (err) {
       console.error(err);
       showToast(err.message || "Не удалось сохранить порядок фото", true);
-      await loadProjects({ preserveFormDraft: true });
     } finally {
       setBusy(false);
     }
@@ -657,27 +640,20 @@
 
   async function reorderGallery(dragKey, targetKey) {
     if (!dragKey || !targetKey || dragKey === targetKey || isBusy) return;
-
     const order = getGalleryOrderFromDom();
     const keys = order.map(galleryEntryKey);
     const fromIndex = keys.indexOf(dragKey);
     const toIndex = keys.indexOf(targetKey);
     if (fromIndex < 0 || toIndex < 0) return;
-
     const [moved] = keys.splice(fromIndex, 1);
     keys.splice(toIndex, 0, moved);
-
     const newOrder = keys.map((key) => {
-      if (key.startsWith("saved:")) {
-        return { type: "saved", id: key.slice(6) };
-      }
+      if (key.startsWith("saved:")) return { type: "saved", id: key.slice(6) };
       return { type: "pending", index: Number(key.slice(8)) };
     });
-
     applyGalleryOrder(newOrder);
     const project = getCurrentProject();
     if (project) renderGallery(project);
-
     const hadSaved = newOrder.some((e) => e.type === "saved");
     if (hadSaved) await saveGallerySortOrder();
   }
@@ -686,17 +662,13 @@
     let dragKey = null;
 
     galleryList.addEventListener("dragstart", (e) => {
-      if (e.target.closest(".admin-gallery__remove")) {
-        e.preventDefault();
-        return;
-      }
+      if (e.target.closest(".admin-gallery__remove")) { e.preventDefault(); return; }
       const item = e.target.closest(".admin-gallery__item");
       if (!item || isBusy) return;
       const order = getGalleryOrderFromDom();
       const index = [...galleryList.querySelectorAll(".admin-gallery__item")].indexOf(item);
       const entry = order[index];
       if (!entry) return;
-
       dragKey = galleryEntryKey(entry);
       item.classList.add("is-dragging");
       e.dataTransfer.effectAllowed = "move";
@@ -718,7 +690,6 @@
       const index = [...galleryList.querySelectorAll(".admin-gallery__item")].indexOf(item);
       const entry = order[index];
       if (!entry || galleryEntryKey(entry) === dragKey) return;
-
       galleryList.querySelectorAll(".is-drag-over").forEach((el) => {
         if (el !== item) el.classList.remove("is-drag-over");
       });
@@ -733,128 +704,30 @@
       const index = [...galleryList.querySelectorAll(".admin-gallery__item")].indexOf(item);
       const entry = order[index];
       if (!entry) return;
-
       item.classList.remove("is-drag-over");
       void reorderGallery(dragKey, galleryEntryKey(entry));
     });
   }
 
+  // ── sync ──────────────────────────────────────────────────────────────────
+
   function notifyMainSiteRefresh() {
-    try {
-      localStorage.setItem(STORAGE_SYNC_KEY, String(Date.now()));
-    } catch (_) {
-      /* ignore */
-    }
+    try { localStorage.setItem(STORAGE_SYNC_KEY, String(Date.now())); } catch (_) { /* ignore */ }
     try {
       const channel = new BroadcastChannel(SYNC_CHANNEL);
       channel.postMessage("updated");
       channel.close();
-    } catch (_) {
-      /* ignore */
-    }
+    } catch (_) { /* ignore */ }
   }
 
-  async function fetchProjectById(id) {
-    const supabase = client();
-    const { data, error } = await supabase
-      .from("projects")
-      .select(
-        `
-        id,
-        slug,
-        title,
-        city,
-        year,
-        status,
-        typology,
-        description,
-        sort_order,
-        updated_at,
-        published,
-        cover_path,
-        project_images (id, storage_path, sort_order)
-      `
-      )
-      .eq("id", id)
-      .single();
-
-    if (error) throw error;
-    return {
-      ...data,
-      project_images: (data.project_images || []).sort((a, b) => a.sort_order - b.sort_order),
-    };
-  }
-
-  function applyFormFields(fields) {
-    if (!projectForm || !fields) return;
-    const f = projectForm.elements;
-    f.title.value = fields.title;
-    f.city.value = fields.city;
-    f.year.value = fields.year;
-    f.sort_order.value = fields.sort_order;
-    f.status.value = fields.status;
-    f.typology.value = fields.typology;
-    f.description.value = fields.description;
-  }
-
-  function fillForm(project, opts = {}) {
-    const draft = opts.preserveFormDraft ? readFormFields() : null;
-
-    projectForm.hidden = false;
-    emptyState.hidden = true;
-
-    const f = projectForm.elements;
-    f.title.value = project.title;
-    f.city.value = project.city;
-    f.year.value = project.year;
-    f.sort_order.value = project.sort_order;
-    f.status.value = project.status || "";
-    f.typology.value = project.typology || "";
-    f.description.value = project.description || "";
-    if (projectForm.elements.sort_order) {
-      projectForm.elements.sort_order.value = project.sort_order;
-    }
-
-    if (draft) {
-      applyFormFields(draft);
-      formTitle.textContent = draft.title || "Проект";
-    } else {
-      formTitle.textContent = project.title || "Проект";
-    }
-
-    if (project.cover_path && !project.cover_path.startsWith("legacy/")) {
-      setCoverPreviewUrl(publicUrl(project.cover_path));
-    } else {
-      resetCoverPreview();
-    }
-    renderGallery(project);
-  }
-
-  function selectProject(id) {
-    currentId = id;
-    clearPendingFiles();
-    const project = getCurrentProject();
-    if (!project) return;
-    fillForm(project);
-    renderProjectList();
-  }
+  // ── load / save projects ──────────────────────────────────────────────────
 
   async function loadProjects(opts = {}) {
-    const supabase = client();
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (!sessionData.session) {
-      throw new Error("Нет активной сессии. Проверьте URL в Supabase Auth (см. supabase/ADMIN.md).");
-    }
-
     try {
       projects = await fetchAllProjects();
     } catch (err) {
-      throw new Error(
-        (err.message || "Ошибка загрузки") +
-          " — выполните supabase/policies-admin.sql в SQL Editor, если ещё не делали."
-      );
+      throw new Error(err.message || "Ошибка загрузки проектов");
     }
-
     renderProjectList();
     if (currentId && !getCurrentProject()) {
       currentId = null;
@@ -865,23 +738,8 @@
     }
   }
 
-  function readFormFields() {
-    const fd = new FormData(projectForm);
-    return {
-      title: String(fd.get("title") || "").trim(),
-      city: String(fd.get("city") || "").trim(),
-      year: String(fd.get("year") || "").trim(),
-      sort_order: Number(fd.get("sort_order")) || 0,
-      status: String(fd.get("status") || "").trim() || "Концепция",
-      typology: String(fd.get("typology") || "").trim() || "Общественное здание",
-      description: String(fd.get("description") || "").trim(),
-      published: Boolean(getCurrentProject()?.published),
-    };
-  }
-
   async function saveProject() {
     if (!currentId || isBusy) return;
-
     const project = getCurrentProject();
     if (!project) return;
 
@@ -892,63 +750,32 @@
     }
 
     const slug = makeUniqueSlug(fields.title, currentId);
-
     setBusy(true);
     try {
-      const supabase = client();
-      const coverPath = project.cover_path;
-
-      const { data: savedRow, error: updateError } = await supabase
-        .from("projects")
-        .update({
-          title: fields.title,
-          city: fields.city,
-          year: fields.year,
-          sort_order: fields.sort_order,
-          status: fields.status,
-          typology: fields.typology,
-          slug,
-          description: fields.description,
-          cover_path: coverPath,
-          published: fields.published,
-        })
-        .eq("id", currentId)
-        .select("id, title, status, typology, description, updated_at, published")
-        .single();
-
-      if (updateError) throw updateError;
-      if (!savedRow?.id) {
-        throw new Error("Supabase не обновил запись. Проверьте RLS и policies-admin.sql");
-      }
+      Object.assign(project, {
+        title: fields.title,
+        city: fields.city,
+        year: fields.year,
+        sort_order: fields.sort_order,
+        status: fields.status,
+        typology: fields.typology,
+        description: fields.description,
+        slug,
+      });
 
       const galleryOrder = getGalleryOrderFromDom();
       if (galleryOrder.some((e) => e.type === "saved")) {
         applyGalleryOrder(galleryOrder);
-        const orderedProject = getCurrentProject();
-
-        if (orderedProject?.project_images.length) {
-          const sortUpdates = orderedProject.project_images.map((img) =>
-            supabase.from("project_images").update({ sort_order: img.sort_order }).eq("id", img.id),
-          );
-          const sortResults = await Promise.all(sortUpdates);
-          const sortFailed = sortResults.find((r) => r.error);
-          if (sortFailed?.error) throw sortFailed.error;
-        }
       }
 
-      const verified = await fetchProjectById(currentId);
-      if (verified.title !== fields.title) {
-        throw new Error("Проверка не прошла: название в базе не совпадает");
-      }
-
+      await saveAllProjects();
       clearPendingFiles();
       await loadProjects();
       selectProject(currentId);
       notifyMainSiteRefresh();
       setMediaStatus("cover", "");
-
       showToast(
-        fields.published
+        project.published
           ? "Сохранено — проект на сайте"
           : "Сохранено (черновик, на сайте не виден)"
       );
@@ -963,12 +790,13 @@
   async function removeGalleryImage(imageId, storagePath) {
     if (!currentId || isBusy) return;
     if (!confirm("Удалить это фото из галереи?")) return;
-
     setBusy(true);
     try {
-      const supabase = client();
-      const { error } = await supabase.from("project_images").delete().eq("id", imageId);
-      if (error) throw error;
+      const project = getCurrentProject();
+      if (project) {
+        project.project_images = (project.project_images || []).filter((i) => i.id !== imageId);
+      }
+      await saveAllProjects();
       await removeStorage([storagePath]);
       await loadProjects({ preserveFormDraft: true });
       showToast("Фото удалено");
@@ -983,33 +811,28 @@
     if (isBusy) return;
     setBusy(true);
     try {
-      const supabase = client();
-      const nextOrder =
-        projects.length > 0 ? Math.min(...projects.map((p) => p.sort_order)) - 1 : 1;
+      const nextOrder = projects.length > 0
+        ? Math.min(...projects.map((p) => p.sort_order)) - 1
+        : 1;
+      const id = newId();
       const title = "Новый проект";
       const slug = makeUniqueSlug(title, null);
-
-      const { data, error } = await supabase
-        .from("projects")
-        .insert({
-          slug,
-          title,
-          city: "город",
-          year: String(new Date().getFullYear()),
-          status: "Концепция",
-          typology: "Общественное здание",
-          description: "",
-          cover_path: "legacy/project-01.jpg",
-          sort_order: nextOrder,
-          published: false,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
+      const newProject = {
+        id, slug, title,
+        city: "город",
+        year: String(new Date().getFullYear()),
+        status: "Концепция",
+        typology: "Общественное здание",
+        description: "",
+        cover_path: "",
+        sort_order: nextOrder,
+        published: false,
+        project_images: [],
+      };
+      projects.unshift(newProject);
+      await saveAllProjects();
       await loadProjects();
-      selectProject(data.id);
+      selectProject(id);
       resetCoverPreview();
       setMediaStatus("cover", "Выберите обложку — загрузится сразу");
       showToast("Создан новый проект — загрузите фото");
@@ -1025,20 +848,12 @@
     const project = getCurrentProject();
     if (!project) return;
     if (!confirm(`Удалить проект «${project.title}»?`)) return;
-
     setBusy(true);
     try {
-      const supabase = client();
-      const paths = [
-        project.cover_path,
-        ...project.project_images.map((i) => i.storage_path),
-      ].filter(Boolean);
-
-      const { error } = await supabase.from("projects").delete().eq("id", currentId);
-      if (error) throw error;
-
+      const paths = [project.cover_path, ...(project.project_images || []).map((i) => i.storage_path)].filter(Boolean);
+      projects = projects.filter((p) => p.id !== currentId);
+      await saveAllProjects();
       await removeStorage(paths);
-
       currentId = null;
       projectForm.hidden = true;
       emptyState.hidden = false;
@@ -1051,6 +866,8 @@
       setBusy(false);
     }
   }
+
+  // ── screens ───────────────────────────────────────────────────────────────
 
   function showApp() {
     loginScreen.hidden = true;
@@ -1070,101 +887,65 @@
 
   async function tryEnterApp(showWelcome) {
     await loadProjects();
-    if (window.AdminPages?.init) {
-      await window.AdminPages.init({ showToast, setBusy });
-    }
+    if (window.AdminPages?.init) await window.AdminPages.init({ showToast, setBusy });
     showApp();
     if (showWelcome) showToast("Вы вошли в админку");
   }
 
   async function initSession() {
-    const supabase = client();
-    if (!supabase) {
-      loginError.textContent = "Настройте js/supabase-config.js";
-      loginError.hidden = false;
-      return;
-    }
-
+    const token = getToken();
+    if (!token) return;
     try {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        await tryEnterApp(false);
-      }
+      await tryEnterApp(false);
     } catch (err) {
-      console.error(err);
-      showLoginError("Не удалось загрузить проекты: " + (err.message || ""));
-      await supabase.auth.signOut();
+      clearToken();
+      console.warn("Сессия недействительна:", err.message);
     }
   }
 
-  function formatLoginError(error) {
-    const msg = error?.message || "";
-    if (/email not confirmed/i.test(msg)) {
-      return "Подтвердите email (письмо от Supabase) или отключите Confirm email в Auth → Providers.";
-    }
-    if (/invalid login credentials/i.test(msg)) {
-      return "Неверный email или пароль.";
-    }
-    return msg || "Не удалось войти.";
-  }
+  // ── event bindings ────────────────────────────────────────────────────────
 
   loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     loginError.hidden = true;
-
     const submitBtn = loginForm.querySelector('button[type="submit"]');
     const fd = new FormData(loginForm);
-    const email = String(fd.get("email") || "").trim();
     const password = String(fd.get("password") || "");
 
-    const supabase = client();
-    if (!supabase) {
-      loginError.textContent = "Supabase не настроен (js/supabase-config.js)";
+    if (!getWorkerUrl()) {
+      loginError.textContent = "UPLOAD_WORKER_URL не задан в supabase-config.js";
       loginError.hidden = false;
       return;
     }
 
     submitBtn.disabled = true;
     submitBtn.textContent = "Вход…";
-    isLoggingIn = true;
 
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-
-      if (signInError) {
-        showLoginError(formatLoginError(signInError));
-        return;
-      }
-
-      const { data: sessionWrap, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) {
-        showLoginError(sessionError.message);
-        return;
-      }
-      if (!sessionWrap.session) {
-        showLoginError(
-          "Вход выполнен, но сессия не сохранилась. В Supabase: Auth → URL Configuration добавьте http://127.0.0.1:8080"
-        );
-        return;
-      }
-
+      await loginWithPassword(password);
       await tryEnterApp(true);
     } catch (err) {
-      console.error(err);
-      showLoginError(err.message || "Ошибка входа");
-      await supabase.auth.signOut();
+      loginError.textContent = err.message || "Не удалось войти";
+      loginError.hidden = false;
+      showToast(err.message || "Ошибка входа", true);
     } finally {
-      isLoggingIn = false;
       submitBtn.disabled = false;
       submitBtn.textContent = "Войти";
     }
   });
 
-  document.getElementById("btnLogout").addEventListener("click", async () => {
-    await client().auth.signOut();
+  document.getElementById("btnLogout").addEventListener("click", () => {
+    clearToken();
     projects = [];
     currentId = null;
     showLogin();
+  });
+
+  projectList.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-select-id]");
+    if (btn) { selectProject(btn.dataset.selectId); return; }
+    const toggle = e.target.closest("[data-publish-toggle]");
+    if (toggle) setProjectPublished(toggle.dataset.publishToggle, toggle.checked);
   });
 
   document.getElementById("btnNewProject").addEventListener("click", createProject);
@@ -1172,14 +953,11 @@
     btn.addEventListener("click", () => saveProject());
   });
   document.getElementById("btnDelete").addEventListener("click", deleteProject);
+
   coverInput.addEventListener("change", () => {
     const file = coverInput.files?.[0];
     if (!file) return;
-    if (!currentId) {
-      showToast("Сначала выберите или создайте проект", true);
-      coverInput.value = "";
-      return;
-    }
+    if (!currentId) { showToast("Сначала выберите или создайте проект", true); coverInput.value = ""; return; }
     void uploadCoverNow(file);
   });
 
@@ -1187,25 +965,11 @@
     const files = [...(galleryInput.files || [])];
     if (!files.length) return;
     galleryInput.value = "";
-    if (!currentId) {
-      showToast("Сначала выберите или создайте проект", true);
-      return;
-    }
+    if (!currentId) { showToast("Сначала выберите или создайте проект", true); return; }
     void uploadGalleryFilesNow(files);
-  });
-
-  client()?.auth.onAuthStateChange((event) => {
-    if (isLoggingIn) return;
-    if (event === "SIGNED_OUT") showLogin();
   });
 
   setupProjectListDnD();
   setupGalleryDnD();
-
-  if (!window.SupabasePortfolio?.isConfigured()) {
-    loginError.textContent = "Заполните js/supabase-config.js";
-    loginError.hidden = false;
-  } else {
-    initSession();
-  }
+  initSession();
 })();

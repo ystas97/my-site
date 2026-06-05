@@ -176,16 +176,12 @@
   }
 
   async function fetchSections() {
-    if (!window.SupabasePortfolio?.isConfigured()) return null;
-    const client = window.SupabasePortfolio.getClient();
-    const { data, error } = await client
-      .from("site_sections")
-      .select("slug, content, updated_at");
-    if (error) throw error;
+    const res = await fetch(`data/site-sections.json?v=${Date.now()}`, { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
     const map = {};
-    (data || []).forEach((row) => {
-      map[row.slug] = { content: row.content, updated_at: row.updated_at };
-    });
+    if (data.about) map.about = { content: data.about, updated_at: null };
+    if (data.contacts) map.contacts = { content: data.contacts, updated_at: null };
     return map;
   }
 

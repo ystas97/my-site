@@ -1,0 +1,285 @@
+{
+  "version": 1,
+  "updated_at": "2026-06-05T09:00:00.000Z",
+  "projects": [
+    {
+      "id": "project-01",
+      "slug": "project-01",
+      "title": "детская художественная школа",
+      "city": "альметьевск",
+      "year": "2022",
+      "status": "Концепция",
+      "typology": "Общественное здание",
+      "description": "Проект «детская художественная школа» — альметьевск, 2022. Архитектурная концепция, разработка проектной и рабочей документации. В основе решения — функциональная планировка, связь с городской средой и выразительность фасадов.",
+      "cover_path": "assets/images/project-01.jpg",
+      "sort_order": 1,
+      "published": true,
+      "project_images": [
+        { "id": "p01-i0", "storage_path": "assets/images/project-01.jpg", "sort_order": 0 },
+        { "id": "p01-i1", "storage_path": "assets/images/project-02.jpg", "sort_order": 1 },
+        { "id": "p01-i2", "storage_path": "assets/images/project-03.jpg", "sort_order": 2 }
+      ]
+    },
+    {
+      "id": "project-02",
+      "slug": "project-02",
+      "title": "детская художественная школа",
+      "city": "альметьевск",
+      "year": "2022",
+      "status": "Концепция",
+      "typology": "Общественное здание",
+      "description": "Проект «детская художественная школа» — альметьевск, 2022. Архитектурная концепция, разработка проектной и рабочей документации. В основе решения — функциональная планировка, связь с городской средой и выразительность фасадов.",
+      "cover_path": "assets/images/project-02.jpg",
+      "sort_order": 2,
+      "published": true,
+      "project_images": [
+        { "id": "p02-i0", "storage_path": "assets/images/project-02.jpg", "sort_order": 0 },
+        { "id": "p02-i1", "storage_path": "assets/images/project-03.jpg", "sort_order": 1 },
+        { "id": "p02-i2", "storage_path": "assets/images/project-04.jpg", "sort_order": 2 }
+      ]
+    },
+    {
+      "id": "project-03",
+      "slug": "project-03",
+      "title": "детская художественная школа",
+      "city": "альметьевск",
+      "year": "2022",
+      "status": "Концепция",
+      "typology": "Общественное здание",
+      "description": "Проект «детская художественная школа» — альметьевск, 2022. Архитектурная концепция, разработка проектной и рабочей документации. В основе решения — функциональная планировка, связь с городской средой и выразительность фасадов.",
+      "cover_path": "assets/images/project-03.jpg",
+      "sort_order": 3,
+      "published": true,
+      "project_images": [
+        { "id": "p03-i0", "storage_path": "assets/images/project-03.jpg", "sort_order": 0 },
+        { "id": "p03-i1", "storage_path": "assets/images/project-04.jpg", "sort_order": 1 },
+        { "id": "p03-i2", "storage_path": "assets/images/project-01.jpg", "sort_order": 2 }
+      ]
+    },
+    {
+      "id": "project-04",
+      "slug": "project-04",
+      "title": "детская художественная школа",
+      "city": "альметьевск",
+      "year": "2022",
+      "status": "Концепция",
+      "typology": "Общественное здание",
+      "description": "Проект «детская художественная школа» — альметьевск, 2022. Архитектурная концепция, разработка проектной и рабочей документации. В основе решения — функциональная планировка, связь с городской средой и выразительность фасадов.",
+      "cover_path": "assets/images/project-04.jpg",
+      "sort_order": 4,
+      "published": true,
+      "project_images": [
+        { "id": "p04-i0", "storage_path": "assets/images/project-04.jpg", "sort_order": 0 },
+        { "id": "p04-i1", "storage_path": "assets/images/project-01.jpg", "sort_order": 1 },
+        { "id": "p04-i2", "storage_path": "assets/images/project-02.jpg", "sort_order": 2 }
+      ]
+    },
+    {
+      "id": "project-05",
+      "slug": "project-05",
+      "title": "детская художественная школа",
+      "city": "альметьевск",
+      "year": "2022",
+      "status": "Концепция",
+      "typology": "Общественное здание",
+      "description": "Проект «детская художественная школа» — альметьевск, 2022. Архитектурная концепция, разработка проектной и рабочей документации. В основе решения — функциональная планировка, связь с городской средой и выразительность фасадов.",
+      "cover_path": "assets/images/project-02.jpg",
+      "sort_order": 5,
+      "published": true,
+      "project_images": [
+        { "id": "p05-i0", "storage_path": "assets/images/project-02.jpg", "sort_order": 0 },
+        { "id": "p05-i1", "storage_path": "assets/images/project-04.jpg", "sort_order": 1 }
+      ]
+    },
+    {
+      "id": "project-06",
+      "slug": "project-06",
+      "title": "детская художественная школа",
+      "city": "альметьевск",
+      "year": "2022",
+      "status": "Концепция",
+      "typology": "Общественное здание",
+      "description": "Проект «детская художественная школа» — альметьевск, 2022. Архитектурная концепция, разработка проектной и рабочей документации. В основе решения — функциональная планировка, связь с городской средой и выразительность фасадов.",
+      "cover_path": "assets/images/project-03.jpg",
+      "sort_order": 6,
+      "published": true,
+      "project_images": [
+        { "id": "p06-i0", "storage_path": "assets/images/project-03.jpg", "sort_order": 0 },
+        { "id": "p06-i1", "storage_path": "assets/images/project-05.jpg", "sort_order": 1 }
+      ]
+    },
+    {
+      "id": "project-07",
+      "slug": "project-07",
+      "title": "детская художественная школа",
+      "city": "альметьевск",
+      "year": "2022",
+      "status": "Концепция",
+      "typology": "Общественное здание",
+      "description": "Проект «детская художественная школа» — альметьевск, 2022. Архитектурная концепция, разработка проектной и рабочей документации. В основе решения — функциональная планировка, связь с городской средой и выразительность фасадов.",
+      "cover_path": "assets/images/project-04.jpg",
+      "sort_order": 7,
+      "published": true,
+      "project_images": [
+        { "id": "p07-i0", "storage_path": "assets/images/project-04.jpg", "sort_order": 0 },
+        { "id": "p07-i1", "storage_path": "assets/images/project-06.jpg", "sort_order": 1 }
+      ]
+    },
+    {
+      "id": "project-08",
+      "slug": "project-08",
+      "title": "детская художественная школа",
+      "city": "альметьевск",
+      "year": "2022",
+      "status": "Концепция",
+      "typology": "Общественное здание",
+      "description": "Проект «детская художественная школа» — альметьевск, 2022. Архитектурная концепция, разработка проектной и рабочей документации. В основе решения — функциональная планировка, связь с городской средой и выразительность фасадов.",
+      "cover_path": "assets/images/project-01.jpg",
+      "sort_order": 8,
+      "published": true,
+      "project_images": [
+        { "id": "p08-i0", "storage_path": "assets/images/project-01.jpg", "sort_order": 0 },
+        { "id": "p08-i1", "storage_path": "assets/images/project-07.jpg", "sort_order": 1 }
+      ]
+    },
+    {
+      "id": "project-09",
+      "slug": "project-09",
+      "title": "Реновация физико-математического лицея",
+      "city": "альметьевск",
+      "year": "2016",
+      "status": "Концепция",
+      "typology": "Общественное здание",
+      "description": "Проект «Реновация физико-математического лицея» — альметьевск, 2016. Архитектурная концепция, разработка проектной и рабочей документации. В основе решения — функциональная планировка, связь с городской средой и выразительность фасадов.",
+      "cover_path": "assets/images/project-05.jpg",
+      "sort_order": 9,
+      "published": true,
+      "project_images": [
+        { "id": "p09-i0", "storage_path": "assets/images/project-05.jpg", "sort_order": 0 },
+        { "id": "p09-i1", "storage_path": "assets/images/project-06.jpg", "sort_order": 1 },
+        { "id": "p09-i2", "storage_path": "assets/images/project-07.jpg", "sort_order": 2 }
+      ]
+    },
+    {
+      "id": "project-10",
+      "slug": "project-10",
+      "title": "Реновация физико-математического лицея",
+      "city": "альметьевск",
+      "year": "2016",
+      "status": "Концепция",
+      "typology": "Общественное здание",
+      "description": "Проект «Реновация физико-математического лицея» — альметьевск, 2016. Архитектурная концепция, разработка проектной и рабочей документации. В основе решения — функциональная планировка, связь с городской средой и выразительность фасадов.",
+      "cover_path": "assets/images/project-06.jpg",
+      "sort_order": 10,
+      "published": true,
+      "project_images": [
+        { "id": "p10-i0", "storage_path": "assets/images/project-06.jpg", "sort_order": 0 },
+        { "id": "p10-i1", "storage_path": "assets/images/project-07.jpg", "sort_order": 1 }
+      ]
+    },
+    {
+      "id": "project-11",
+      "slug": "project-11",
+      "title": "Реновация физико-математического лицея",
+      "city": "альметьевск",
+      "year": "2016",
+      "status": "Концепция",
+      "typology": "Общественное здание",
+      "description": "Проект «Реновация физико-математического лицея» — альметьевск, 2016. Архитектурная концепция, разработка проектной и рабочей документации. В основе решения — функциональная планировка, связь с городской средой и выразительность фасадов.",
+      "cover_path": "assets/images/project-07.jpg",
+      "sort_order": 11,
+      "published": true,
+      "project_images": [
+        { "id": "p11-i0", "storage_path": "assets/images/project-07.jpg", "sort_order": 0 },
+        { "id": "p11-i1", "storage_path": "assets/images/project-08.jpg", "sort_order": 1 }
+      ]
+    },
+    {
+      "id": "project-12",
+      "slug": "project-12",
+      "title": "Реновация физико-математического лицея",
+      "city": "альметьевск",
+      "year": "2016",
+      "status": "Концепция",
+      "typology": "Общественное здание",
+      "description": "Проект «Реновация физико-математического лицея» — альметьевск, 2016. Архитектурная концепция, разработка проектной и рабочей документации. В основе решения — функциональная планировка, связь с городской средой и выразительность фасадов.",
+      "cover_path": "assets/images/project-08.jpg",
+      "sort_order": 12,
+      "published": true,
+      "project_images": [
+        { "id": "p12-i0", "storage_path": "assets/images/project-08.jpg", "sort_order": 0 },
+        { "id": "p12-i1", "storage_path": "assets/images/project-05.jpg", "sort_order": 1 }
+      ]
+    },
+    {
+      "id": "project-13",
+      "slug": "project-13",
+      "title": "Реновация культурного центра Космос в Лениногорске",
+      "city": "лениногорск",
+      "year": "2016",
+      "status": "Концепция",
+      "typology": "Общественное здание",
+      "description": "Проект «Реновация культурного центра Космос в Лениногорске» — лениногорск, 2016. Архитектурная концепция, разработка проектной и рабочей документации. В основе решения — функциональная планировка, связь с городской средой и выразительность фасадов.",
+      "cover_path": "assets/images/project-04.jpg",
+      "sort_order": 13,
+      "published": true,
+      "project_images": [
+        { "id": "p13-i0", "storage_path": "assets/images/project-04.jpg", "sort_order": 0 },
+        { "id": "p13-i1", "storage_path": "assets/images/project-02.jpg", "sort_order": 1 },
+        { "id": "p13-i2", "storage_path": "assets/images/project-08.jpg", "sort_order": 2 }
+      ]
+    },
+    {
+      "id": "project-14",
+      "slug": "project-14",
+      "title": "Клубный жилой дом",
+      "city": "альметьевск",
+      "year": "2016",
+      "status": "Концепция",
+      "typology": "Общественное здание",
+      "description": "Проект «Клубный жилой дом» — альметьевск, 2016. Архитектурная концепция, разработка проектной и рабочей документации. В основе решения — функциональная планировка, связь с городской средой и выразительность фасадов.",
+      "cover_path": "assets/images/project-02.jpg",
+      "sort_order": 14,
+      "published": true,
+      "project_images": [
+        { "id": "p14-i0", "storage_path": "assets/images/project-02.jpg", "sort_order": 0 },
+        { "id": "p14-i1", "storage_path": "assets/images/project-06.jpg", "sort_order": 1 }
+      ]
+    },
+    {
+      "id": "project-15",
+      "slug": "project-15",
+      "title": "Концепция офисно-производственного кластера",
+      "city": "альметьевск",
+      "year": "2016",
+      "status": "Концепция",
+      "typology": "Общественное здание",
+      "description": "Проект «Концепция офисно-производственного кластера» — альметьевск, 2016. Архитектурная концепция, разработка проектной и рабочей документации. В основе решения — функциональная планировка, связь с городской средой и выразительность фасадов.",
+      "cover_path": "assets/images/project-03.jpg",
+      "sort_order": 15,
+      "published": true,
+      "project_images": [
+        { "id": "p15-i0", "storage_path": "assets/images/project-03.jpg", "sort_order": 0 },
+        { "id": "p15-i1", "storage_path": "assets/images/project-07.jpg", "sort_order": 1 }
+      ]
+    },
+    {
+      "id": "project-16",
+      "slug": "project-16",
+      "title": "ПЕРЕЦ",
+      "city": "альметьевск",
+      "year": "2016",
+      "status": "Концепция",
+      "typology": "Общественное здание",
+      "description": "Проект «ПЕРЕЦ» — альметьевск, 2016. Архитектурная концепция, разработка проектной и рабочей документации. В основе решения — функциональная планировка, связь с городской средой и выразительность фасадов.",
+      "cover_path": "assets/images/project-08.jpg",
+      "sort_order": 16,
+      "published": true,
+      "project_images": [
+        { "id": "p16-i0", "storage_path": "assets/images/project-08.jpg", "sort_order": 0 },
+        { "id": "p16-i1", "storage_path": "assets/images/project-09.png", "sort_order": 1 },
+        { "id": "p16-i2", "storage_path": "assets/images/project-10.png", "sort_order": 2 }
+      ]
+    }
+  ]
+}

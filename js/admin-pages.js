@@ -211,22 +211,14 @@
     aboutDraft = window.SiteContent.DEFAULT_ABOUT;
     contactsDraft = window.SiteContent.DEFAULT_CONTACTS;
 
-    if (!window.SupabasePortfolio?.isConfigured()) return;
-
     try {
-      const rows = await window.SupabasePortfolio.fetchSiteSections();
-      const map = {};
-      rows.forEach((row) => {
-        map[row.slug] = row.content;
-      });
-      if (map.about) aboutDraft = window.SiteContent.normalizeAbout(map.about);
-      if (map.contacts) contactsDraft = window.SiteContent.normalizeContacts(map.contacts);
+      const res = await fetch(`data/site-sections.json?v=${Date.now()}`, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (data.about) aboutDraft = window.SiteContent.normalizeAbout(data.about);
+      if (data.contacts) contactsDraft = window.SiteContent.normalizeContacts(data.contacts);
     } catch (err) {
-      console.warn(err);
-      showToast(
-        "Не загружены разделы «О бюро». Выполните supabase/migrate-site-sections.sql в SQL Editor.",
-        true,
-      );
+      console.warn("Не удалось загрузить разделы, используются данные по умолчанию:", err.message);
     }
   }
 
@@ -241,6 +233,21 @@
     }
   }
 
+  async function saveSections(newAbout, newContacts) {
+    const url = (window.UPLOAD_WORKER_URL || "").trim();
+    const token = localStorage.getItem("antonovka_worker_token") || "";
+    if (!url) throw new Error("UPLOAD_WORKER_URL не задан");
+    const res = await fetch(`${url}/data/sections`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ about: newAbout, contacts: newContacts }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+  }
+
   async function saveAbout() {
     const content = readAboutFromForm();
     if (!content.blocks[0].paragraphs.length) {
@@ -250,7 +257,7 @@
 
     setBusy(true);
     try {
-      await window.SupabasePortfolio.upsertSiteSection("about", content);
+      await saveSections(content, contactsDraft);
       aboutDraft = content;
       broadcastUpdate();
       showToast("Раздел «О бюро» сохранён");
@@ -271,7 +278,7 @@
 
     setBusy(true);
     try {
-      await window.SupabasePortfolio.upsertSiteSection("contacts", content);
+      await saveSections(aboutDraft, content);
       contactsDraft = content;
       broadcastUpdate();
       showToast("Контакты сохранены");
