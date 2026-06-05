@@ -301,9 +301,9 @@
 
   function workerConfig() {
     const url = window.UPLOAD_WORKER_URL?.trim();
-    const secret = window.UPLOAD_WORKER_SECRET?.trim();
-    if (!url || !secret) throw new Error("UPLOAD_WORKER_URL / UPLOAD_WORKER_SECRET не заданы в supabase-config.js");
-    return { url, secret };
+    const token = localStorage.getItem("antonovka_worker_token") || "";
+    if (!url) throw new Error("UPLOAD_WORKER_URL не задан в supabase-config.js");
+    return { url, token };
   }
 
   async function uploadPersonImage(index, file) {
@@ -319,13 +319,13 @@
       if (img) img.src = localUrl;
     }
 
-    const { url, secret } = workerConfig();
+    const { url, token } = workerConfig();
     const form = new FormData();
     form.append("file", file);
     form.append("path", path);
     const res = await fetch(`${url}/upload`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${secret}` },
+      headers: { Authorization: `Bearer ${token}` },
       body: form,
     });
     if (!res.ok) {
