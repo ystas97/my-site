@@ -345,7 +345,7 @@
       person.image_version = version;
     }
 
-    await window.SupabasePortfolio.upsertSiteSection("about", content);
+    await saveSections(content, contactsDraft);
     aboutDraft = content;
     broadcastUpdate();
 
