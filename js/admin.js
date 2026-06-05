@@ -522,11 +522,10 @@
 
       coverInput.value = "";
       if (currentId === projectId) {
-        setCoverPreviewUrl(publicUrl(path));
         setMediaStatus("cover", "Обложка загружена");
       }
       notifyMainSiteRefresh();
-      showToast("Обложка загружена");
+      showToast("Обложка загружена. На сайте обновится через 1–2 минуты");
     } catch (err) {
       console.error(err);
       showToast(err.message || "Не удалось загрузить обложку", true);
