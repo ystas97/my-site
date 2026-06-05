@@ -333,8 +333,6 @@
       throw new Error(`Worker upload failed: ${msg}`);
     }
 
-    URL.revokeObjectURL(localUrl);
-
     const field = personImageInput(index);
     if (field) field.value = path;
 
@@ -349,8 +347,19 @@
     aboutDraft = content;
     broadcastUpdate();
 
-    updatePersonPreview(index, path, version);
-    showToast("Фото сохранено и опубликовано на сайте");
+    if (previewWrap) {
+      previewWrap.classList.remove("is-uploading", "is-loading", "is-error", "is-empty");
+      const img = document.getElementById(`person${index}Preview`);
+      if (img) {
+        if (img.dataset.blobUrl && img.dataset.blobUrl !== localUrl) {
+          URL.revokeObjectURL(img.dataset.blobUrl);
+        }
+        img.dataset.blobUrl = localUrl;
+        img.src = localUrl;
+        img.alt = "";
+      }
+    }
+    showToast("Фото сохранено. На сайте обновится через 1–2 минуты");
   }
 
   function bindEvents() {
