@@ -121,7 +121,12 @@
   }
 
   function publicUrl(path) {
-    return window.SupabasePortfolio?.storagePublicUrl(path) || path || "";
+    const url = window.SupabasePortfolio?.storagePublicUrl(path) || path || "";
+    // Админка в /admin/ — относительные assets-пути ведут из корня сайта
+    if (url && !/^https?:\/\//i.test(url) && url.startsWith("assets/")) {
+      return `../${url}`;
+    }
+    return url;
   }
 
   // ── file upload / delete via Worker ──────────────────────────────────────

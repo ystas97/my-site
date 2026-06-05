@@ -28,7 +28,11 @@
   }
 
   function publicUrl(path) {
-    return window.SupabasePortfolio?.storagePublicUrl(path) || path;
+    const url = window.SupabasePortfolio?.storagePublicUrl(path) || path || "";
+    if (url && !/^https?:\/\//i.test(url) && url.startsWith("assets/")) {
+      return `../${url}`;
+    }
+    return url;
   }
 
   function paragraphsToText(paragraphs) {
