@@ -184,9 +184,10 @@ async function handleGetData(key, env) {
   if (!path) return json({ error: "not found" }, 404);
   const file = await ghGet(env, path);
   if (!file) return json({ error: "not found" }, 404);
-  const content = atob(file.content.replace(/\n/g, ""));
-  return new Response(content, {
-    headers: { "Content-Type": "application/json", ...CORS_HEADERS },
+  const binary = atob(file.content.replace(/\n/g, ""));
+  const bytes = Uint8Array.from(binary, (c) => c.charCodeAt(0));
+  return new Response(bytes, {
+    headers: { "Content-Type": "application/json; charset=utf-8", ...CORS_HEADERS },
   });
 }
 
