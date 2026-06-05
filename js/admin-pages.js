@@ -216,7 +216,7 @@
     contactsDraft = window.SiteContent.DEFAULT_CONTACTS;
 
     try {
-      const res = await fetch(`data/site-sections.json?v=${Date.now()}`, { cache: "no-store" });
+      const res = await fetch(`../data/site-sections.json?v=${Date.now()}`, { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (data.about) aboutDraft = window.SiteContent.normalizeAbout(data.about);

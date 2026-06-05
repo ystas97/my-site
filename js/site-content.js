@@ -175,8 +175,12 @@
     window.dispatchEvent(new Event("resize"));
   }
 
+  function dataBase() {
+    return location.pathname.includes("/admin/") ? "../" : "";
+  }
+
   async function fetchSections() {
-    const res = await fetch(`data/site-sections.json?v=${Date.now()}`, { cache: "no-store" });
+    const res = await fetch(`${dataBase()}data/site-sections.json?v=${Date.now()}`, { cache: "no-store" });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const map = {};
